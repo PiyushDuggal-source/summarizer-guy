@@ -35,71 +35,84 @@ function listGroupsWithUnread() {
     try {
       const unreadBadge = el.querySelector('span[aria-label*="unread"]');
       const unreadCountMatch = unreadBadge?.ariaLabel?.match(/(\d+)/);
-      const unreadCount = unreadCountMatch ? parseInt(unreadCountMatch[1], 10) : 0;
-      
+      const unreadCount = unreadCountMatch
+        ? parseInt(unreadCountMatch[1], 10)
+        : 0;
+
       // Only process if there are unread messages or if it's a group chat
       if (unreadCount > 0) {
         const nameElement = el.querySelector("span[title]");
-        const lastMessageElement = el.querySelector('[data-testid="last-msg-status"], [data-testid="last-msg"]');
-        const timeElement = el.querySelector('time');
-        const avatarElement = el.querySelector('img[src]');
+        const lastMessageElement = el.querySelector(
+          '[data-testid="last-msg-status"], [data-testid="last-msg"]'
+        );
+        const timeElement = el.querySelector("time");
+        const avatarElement = el.querySelector("img[src]");
         const isMuted = !!el.querySelector('[data-testid="muted"]');
         const isPinned = !!el.closest('[aria-label*="pinned"]');
         const isGroup = !!el.querySelector('[data-testid="group"]');
-        const lastMessageTime = timeElement?.getAttribute('datetime') || '';
-        
+        const lastMessageTime = timeElement?.getAttribute("datetime") || "";
+
         if (nameElement) {
           // Create a unique selector for this group
           const groupName = nameElement.title || nameElement.textContent;
           const groupId = `group-${index}-${Date.now()}`;
-          const groupSelector = `div[role="listitem"]:has(span[title="${groupName.replace(/"/g, '\\"')}"])`;
-          
+          const groupSelector = `div[role="listitem"]:has(span[title="${groupName.replace(
+            /"/g,
+            '\\"'
+          )}"])`;
+
           const groupInfo = {
             // Basic info
             id: groupId,
             name: groupName,
             unreadCount: unreadCount,
             selector: groupSelector, // Store the CSS selector instead of the element
-            
+
             // Message info
-            lastMessage: lastMessageElement?.textContent?.trim() || '',
+            lastMessage: lastMessageElement?.textContent?.trim() || "",
             lastMessageTime: lastMessageTime,
-            lastMessageTimestamp: lastMessageTime ? new Date(lastMessageTime).getTime() : 0,
-            
+            lastMessageTimestamp: lastMessageTime
+              ? new Date(lastMessageTime).getTime()
+              : 0,
+
             // Group metadata
             isGroup: isGroup,
             isMuted: isMuted,
             isPinned: isPinned,
-            
+
             // Media and attachments
             hasUnreadMention: !!el.querySelector('[data-testid="mention"]'),
-            hasMedia: !!el.querySelector('[data-testid="media"], [data-testid*="media-"]'),
-            
+            hasMedia: !!el.querySelector(
+              '[data-testid="media"], [data-testid*="media-"]'
+            ),
+
             // Avatar info
-            avatar: avatarElement?.src || '',
-            avatarAlt: avatarElement?.alt || '',
-            
+            avatar: avatarElement?.src || "",
+            avatarAlt: avatarElement?.alt || "",
+
             // Selectors for future reference
             selectors: {
               chatItem: 'div[role="listitem"]',
               unreadBadge: 'span[aria-label*="unread"]',
-              nameElement: 'span[title]',
+              nameElement: "span[title]",
               lastMessage: '[data-testid*="last-msg"]',
-              timeElement: 'time',
-              avatar: 'img[src]',
+              timeElement: "time",
+              avatar: "img[src]",
               muted: '[data-testid="muted"]',
               group: '[data-testid="group"]',
               mention: '[data-testid="mention"]',
-              media: '[data-testid*="media"]'
-            }
+              media: '[data-testid*="media"]',
+            },
           };
-          
-          console.log(`Found group: ${groupInfo.name} with ${unreadCount} unread messages`);
+
+          console.log(
+            `Found group: ${groupInfo.name} with ${unreadCount} unread messages`
+          );
           groups.push(groupInfo);
         }
       }
     } catch (error) {
-      console.error('Error processing chat element:', error);
+      console.error("Error processing chat element:", error);
     }
   });
 
@@ -130,8 +143,8 @@ async function getLastNMessages(n, groupInfo = null) {
   console.log(`[WhatsApp] Fetching last ${n} messages...`);
   const messages = new Map();
 
-  console.log("[WhatsApp] Group info:", groupInfo)
-  
+  console.log("[WhatsApp] Group info:", groupInfo);
+
   // If groupInfo is provided and contains a selector, find and click the element
   if (groupInfo && groupInfo.selector) {
     console.log(`[WhatsApp] Opening chat for ${groupInfo.name}...`);
@@ -139,19 +152,21 @@ async function getLastNMessages(n, groupInfo = null) {
       // Find the element using the stored selector
       const groupElement = document.querySelector(groupInfo.selector);
 
-      console.log("Group element:", groupElement)
+      console.log("Group element:", groupElement);
       if (groupElement) {
-        console.log("Group element found")
+        console.log("Group element found");
         // Scroll the element into view and click it
-        groupElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for scroll
+        groupElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for scroll
         groupElement.click();
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for chat to load
+        await new Promise((resolve) => setTimeout(resolve, 1500)); // Wait for chat to load
       } else {
-        console.warn(`[WhatsApp] Could not find group element with selector: ${groupInfo.selector}`);
+        console.warn(
+          `[WhatsApp] Could not find group element with selector: ${groupInfo.selector}`
+        );
       }
     } catch (error) {
-      console.error('[WhatsApp] Error opening chat:', error);
+      console.error("[WhatsApp] Error opening chat:", error);
     }
   }
 
@@ -169,13 +184,13 @@ async function getLastNMessages(n, groupInfo = null) {
     'div[class*="pane-body"]',
     'div[class*="pane-body"] > div',
     'div[class*="pane-body"] > div > div',
-    'div[class*="pane-body"] > div > div > div'
+    'div[class*="pane-body"] > div > div > div',
   ];
-  
+
   let messageContainer = null;
   const maxAttempts = 3;
   let attempts = 0;
-  
+
   // Try to find the message container with retries
   while (!messageContainer && attempts < maxAttempts) {
     for (const selector of containerSelectors) {
@@ -185,11 +200,13 @@ async function getLastNMessages(n, groupInfo = null) {
         break;
       }
     }
-    
+
     if (!messageContainer) {
       attempts++;
-      console.log(`[WhatsApp] Message container not found, retrying (${attempts}/${maxAttempts})...`);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retry
+      console.log(
+        `[WhatsApp] Message container not found, retrying (${attempts}/${maxAttempts})...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait before retry
     }
   }
 
@@ -212,7 +229,7 @@ async function getLastNMessages(n, groupInfo = null) {
   }
 
   if (!messageContainer) {
-    console.error('[WhatsApp] Message container not found after all attempts');
+    console.error("[WhatsApp] Message container not found after all attempts");
     return [];
   }
 
@@ -228,12 +245,12 @@ async function getLastNMessages(n, groupInfo = null) {
   while (scrollCount < maxScrolls && messages.size < n) {
     // Scroll up to load more messages
     messageContainer.scrollTop = scrollPosition;
-    await new Promise(resolve => setTimeout(resolve, 800)); // Wait for messages to load
-    
+    await new Promise((resolve) => setTimeout(resolve, 800)); // Wait for messages to load
+
     // Get visible messages
     const visibleMessages = getVisibleMessages();
     let newMessagesFound = false;
-    
+
     // Add new messages to our map
     visibleMessages.forEach((msg) => {
       if (!messages.has(msg.id)) {
@@ -242,148 +259,149 @@ async function getLastNMessages(n, groupInfo = null) {
       }
     });
 
-    console.log(`[WhatsApp] Found ${visibleMessages.length} messages, ${messages.size} unique so far`);
-    
+    console.log(
+      `[WhatsApp] Found ${visibleMessages.length} messages, ${messages.size} unique so far`
+    );
+
     // Check if we've found enough messages
     if (messages.size >= n) {
       console.log(`[WhatsApp] Found requested ${n} messages`);
       break;
     }
-    
+
     // Update scroll position for next iteration
     scrollPosition += scrollStep;
-    
+
     // Check if we've reached the top
     if (messageContainer.scrollTop === 0) {
-      console.log('[WhatsApp] Reached the top of the chat');
+      console.log("[WhatsApp] Reached the top of the chat");
       break;
     }
-    
+
     // Check if we're not making progress
     if (!newMessagesFound) {
       stableScrolls++;
       if (stableScrolls >= maxStableScrolls) {
-        console.log(`[WhatsApp] No new messages found after ${stableScrolls} attempts, stopping`);
+        console.log(
+          `[WhatsApp] No new messages found after ${stableScrolls} attempts, stopping`
+        );
         break;
       }
     } else {
       stableScrolls = 0; // Reset counter if we found new messages
     }
-    
+
     scrollCount++;
   }
 
   return Array.from(messages.values()).slice(-n);
 }
 
-function getVisibleMessages() {
-  console.log("[WhatsApp] Extracting visible messages...");
-  const messages = [];
+function extractTextWithEmojis(el) {
+  let text = "";
 
-  // Try multiple selectors to find message elements
-  const messageSelectors = [
-    // Modern WhatsApp Web
-    '[data-testid="msg-container"]',
-    // Older versions
-    'div[role="row"]',
-    'div[data-id^="false_"]',
-    'div[data-id^="true_"]',
-    // Fallback to any div that looks like a message
-    'div[class*="message-"]',
-    'div[class*="msg-"]',
-    'div[class*="bubble-"]',
-  ];
+  const textNode = el
+    .querySelector(".selectable-text.copyable-text")
+    .querySelector("span");
 
-  let messageElements = [];
-  for (const selector of messageSelectors) {
-    const elements = Array.from(document.querySelectorAll(selector));
-    if (elements.length > 0) {
-      console.log(
-        `Found ${elements.length} messages with selector: ${selector}`
-      );
-      messageElements = elements;
-      break;
-    }
-  }
-
-  if (messageElements.length === 0) {
-    console.warn(
-      "[WhatsApp] No message elements found with standard selectors. Falling back to body scan..."
-    );
-    // Last resort: Get all divs with text that might be messages
-    messageElements = Array.from(document.querySelectorAll("div")).filter(
-      (el) => {
-        return (
-          el.textContent &&
-          el.textContent.trim().length > 0 &&
-          el.textContent.length < 1000
-        ); // Filter out large text blocks
-      }
-    );
-    console.log(
-      `[WhatsApp] Found ${messageElements.length} potential message elements via fallback`
-    );
-  }
-
-  messageElements.forEach((el, index) => {
-    try {
-      // Generate a unique ID if not present
-      const messageId =
-        el.getAttribute("data-id") || `msg-${Date.now()}-${index}`;
-
-      // Try different ways to extract text content
-      const textElement =
-        el.querySelector('[data-testid="selectable-text"]') ||
-        el.querySelector('[class*="selectable-text"]') ||
-        el.querySelector('span[class*="copyable-text"]') ||
-        el;
-
-      // Try to find sender information
-      let sender = "You"; // Default to 'You' for outgoing messages
-      const senderElement =
-        el.querySelector('[data-testid="sender-name"]') ||
-        el.querySelector('[class*="sender-"]') ||
-        el.querySelector('[class*="user-"]');
-
-      // Try to find timestamp
-      const timeElement =
-        el.querySelector('[data-testid="message-meta"]') ||
-        el.querySelector("span[aria-label]") ||
-        el.querySelector("time") ||
-        el.querySelector('[class*="time-"]');
-
-      const message = {
-        id: messageId,
-        text: textElement?.textContent?.trim() || "",
-        sender: senderElement?.textContent?.trim() || sender,
-        timestampISO:
-          timeElement?.getAttribute("datetime") ||
-          timeElement?.ariaLabel ||
-          new Date().toISOString(),
-        isQuoted: !!el.querySelector('.quoted-message, [class*="quoted-"]'),
-        quotedText:
-          el
-            .querySelector(
-              '.quoted-message .selectable-text, [class*="quoted-"] [class*="text-"]'
-            )
-            ?.textContent?.trim() || null,
-        isForwarded: !!el.querySelector(
-          '[data-icon="forwarded"], [class*="forwarded-"]'
-        ),
-        hasMedia: !!el.querySelector(
-          '[data-icon*="media-"], [class*="media-"], img, video, audio'
-        ),
-      };
-
-      // Skip empty messages unless they have media
-      if (message.text || message.hasMedia) {
-        messages.push(message);
-      }
-    } catch (error) {
-      console.error("[WhatsApp] Error processing message element:", error, el);
+  textNode.childNodes.forEach((node) => {
+    console.log("node", node);
+    if (node.nodeType === Node.TEXT_NODE) {
+      text += node.textContent;
+    } else if (node.nodeName === "IMG" && node.alt) {
+      text += node.alt; // emoji
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      text += extractTextWithEmojis(node); // recurse
     }
   });
+  return text;
+}
 
-  console.log(`[WhatsApp] Extracted ${messages.length} messages`);
+async function getLastNMessages(n, groupInfo = null) {
+  console.log(`[WhatsApp] Fetching last ${n} messages...`);
+  const messages = [];
+
+  const messageElements = document.querySelectorAll("div[role='row']");
+
+  for (let i = messageElements.length - 1; i >= 0 && messages.length < n; i--) {
+    const el = messageElements[i];
+
+    try {
+      const id = el.getAttribute("data-id") || `msg-${i}`;
+      const timestamp =
+        el.querySelector("time")?.getAttribute("datetime") ||
+        new Date().toISOString();
+
+      // Sender info (from data-pre-plain-text attribute)
+      const meta =
+        el
+          .querySelector("[data-pre-plain-text]")
+          ?.getAttribute("data-pre-plain-text") || "";
+      const senderMatch = meta.match(/\]\s(.*?):/);
+      const senderName = senderMatch ? senderMatch[1] : "Unknown";
+      const senderNumber = ""; // not available
+
+      // Quoted message
+      let quotedMessage = null;
+      const quotedContainer = el.querySelector(
+        "div[role='button'][aria-label*='Quoted']"
+      );
+      if (quotedContainer) {
+        quotedMessage = {
+          sender: quotedContainer.innerText.split("\n")[0] || "Unknown",
+          senderNumber: "",
+
+          text: quotedContainer.innerText.split("\n").slice(1).join(" ") || "",
+          // text:
+          //   extractTextWithEmojis(quotedContainer)
+          //     .split("\n")
+          //     .slice(1)
+          //     .join(" ")
+          //     .trim() || "",
+        };
+      }
+
+      // Full text extraction (with emojis)
+      let text = extractTextWithEmojis(el).trim();
+
+      // Remove quoted text if duplicated inside
+      if (
+        quotedMessage &&
+        quotedMessage.text &&
+        text.includes(quotedMessage.text)
+      ) {
+        text = text.replace(quotedMessage.text, "").trim();
+      }
+
+      // Remove sender prefix if duplicated
+      if (senderName !== "Unknown" && text.startsWith(senderName)) {
+        text = text.replace(senderName, "").trim();
+      }
+
+      // Remove trailing time (like "9:40 pm")
+      text = text.replace(/\n?\d{1,2}:\d{2}\s?(am|pm)?$/i, "").trim();
+
+      const isQuoted = !!quotedMessage;
+      const isForwarded = !!el.querySelector("span[aria-label*='Forwarded']");
+      const hasMedia = !!el.querySelector("img, video, audio");
+
+      messages.push({
+        id,
+        text,
+        sender: {
+          name: senderName,
+          number: senderNumber,
+        },
+        timestamp,
+        isQuoted,
+        quotedMessage,
+        isForwarded,
+        hasMedia,
+      });
+    } catch (err) {
+      console.warn("[WhatsApp] Failed to parse message:", err);
+    }
+  }
+
   return messages;
 }
