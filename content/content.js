@@ -159,50 +159,303 @@ function extractTextWithEmojis(el) {
   return text;
 }
 
+// async function getLastNMessages(n) {
+//   console.log(`[WhatsApp] Fetching last ${n} messages...`);
+//   const messages = [];
+
+//   const messageElements = document.querySelectorAll("div[role='row']");
+
+//   const downArrowButton = document.querySelector(
+//     "button[aria-label='Scroll to bottom']"
+//   );
+
+//   if (downArrowButton) {
+//     console.log("[WhatsApp] Scrolling to bottom");
+//     chrome.runtime.sendMessage({
+//       action: "changeInfo",
+//       text: "Scrolling to bottom...",
+//     });
+//     new Promise((resolve) => setTimeout(resolve, 1000));
+//     downArrowButton.click();
+//     new Promise((resolve) => setTimeout(resolve, 1000));
+//     chrome.runtime.sendMessage({
+//       action: "changeInfo",
+//       text: "Done scrolling to bottom...",
+//     });
+//   }
+
+//   for (let i = messageElements.length - 1; i >= 0 && messages.length < n; i--) {
+//     const el = messageElements[i];
+
+//     try {
+//       const id = el.getAttribute("data-id") || `msg-${i}`;
+//       const timestamp =
+//         el.querySelector("time")?.getAttribute("datetime") ||
+//         new Date().toISOString();
+
+//       // Sender info (from data-pre-plain-text attribute)
+//       const meta =
+//         el
+//           .querySelector("[data-pre-plain-text]")
+//           ?.getAttribute("data-pre-plain-text") || "";
+//       const senderMatch = meta.match(/\]\s(.*?):/);
+//       const senderName = senderMatch ? senderMatch[1] : "Unknown";
+//       const senderNumber = ""; // not available
+
+//       // Quoted message
+//       let quotedMessage = null;
+//       const quotedContainer = el.querySelector(
+//         "div[role='button'][aria-label*='Quoted']"
+//       );
+//       if (quotedContainer) {
+//         quotedMessage = {
+//           sender: quotedContainer.innerText.split("\n")[0] || "Unknown",
+//           senderNumber: "",
+
+//           text: quotedContainer.innerText.split("\n").slice(1).join(" ") || "",
+//           // text:
+//           //   extractTextWithEmojis(quotedContainer)
+//           //     .split("\n")
+//           //     .slice(1)
+//           //     .join(" ")
+//           //     .trim() || "",
+//         };
+//       }
+
+//       // Full text extraction (with emojis)
+//       let text = extractTextWithEmojis(el).trim();
+
+//       // Remove quoted text if duplicated inside
+//       if (
+//         quotedMessage &&
+//         quotedMessage.text &&
+//         text.includes(quotedMessage.text)
+//       ) {
+//         text = text.replace(quotedMessage.text, "").trim();
+//       }
+
+//       // Remove sender prefix if duplicated
+//       if (senderName !== "Unknown" && text.startsWith(senderName)) {
+//         text = text.replace(senderName, "").trim();
+//       }
+
+//       // Remove trailing time (like "9:40 pm")
+//       text = text.replace(/\n?\d{1,2}:\d{2}\s?(am|pm)?$/i, "").trim();
+
+//       const isQuoted = !!quotedMessage;
+//       const isForwarded = !!el.querySelector("span[aria-label*='Forwarded']");
+//       const hasMedia = !!el.querySelector("img, video, audio");
+
+//       messages.push({
+//         id,
+//         text,
+//         sender: {
+//           name: senderName,
+//           number: senderNumber,
+//         },
+//         timestamp,
+//         isQuoted,
+//         quotedMessage,
+//         isForwarded,
+//         hasMedia,
+//       });
+//     } catch (err) {
+//       console.warn("[WhatsApp] Failed to parse message:", err);
+//     }
+//   }
+
+//   console.log("[WhatsApp] Fetched last", messages.length, "messages");
+
+//   chrome.runtime.sendMessage({
+//     action: "changeInfo",
+//     text:
+//       "Done fetching messages..., " + messages.length + " messages fetched.",
+//   });
+
+//   return messages;
+// }
+
+// async function getLastNMessages(n) {
+//   console.log(`[WhatsApp] Fetching last ${n} messages...`);
+//   const messages = [];
+
+//   // Chat container (where messages are loaded)
+//   const chatContainer = document.querySelector(
+//     "div[role='application'] main div[role='region']"
+//   );
+//   if (!chatContainer) {
+//     console.warn("[WhatsApp] Chat container not found");
+//     return [];
+//   }
+
+//   // Helper to wait
+//   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+//   // Keep scrolling up until enough messages are loaded
+//   let messageElements = document.querySelectorAll("div[role='row']");
+//   while (messageElements.length < n) {
+//     console.log("[WhatsApp] Not enough messages, scrolling up...");
+//     chrome.runtime.sendMessage({
+//       action: "changeInfo",
+//       text: `Scrolling up... loaded ${messageElements.length}/${n}`,
+//     });
+
+//     // Scroll up programmatically
+//     chatContainer.scrollTop = 0;
+//     await sleep(1500); // wait for messages to load
+
+//     // Re-check messages
+//     messageElements = document.querySelectorAll("div[role='row']");
+
+//     // Break if no new messages are loaded (end of chat)
+//     if (messageElements.length >= n || chatContainer.scrollTop === 0) {
+//       break;
+//     }
+//   }
+
+//   // If more than n messages, pick last n
+//   const selectedMessages = Array.from(messageElements).slice(-n);
+
+//   for (let i = 0; i < selectedMessages.length; i++) {
+//     const el = selectedMessages[i];
+//     try {
+//       const id = el.getAttribute("data-id") || `msg-${i}`;
+//       const timestamp =
+//         el.querySelector("time")?.getAttribute("datetime") ||
+//         new Date().toISOString();
+
+//       const meta =
+//         el
+//           .querySelector("[data-pre-plain-text]")
+//           ?.getAttribute("data-pre-plain-text") || "";
+//       const senderMatch = meta.match(/\]\s(.*?):/);
+//       const senderName = senderMatch ? senderMatch[1] : "Unknown";
+
+//       let quotedMessage = null;
+//       const quotedContainer = el.querySelector(
+//         "div[role='button'][aria-label*='Quoted']"
+//       );
+//       if (quotedContainer) {
+//         quotedMessage = {
+//           sender: quotedContainer.innerText.split("\n")[0] || "Unknown",
+//           senderNumber: "",
+//           text: quotedContainer.innerText.split("\n").slice(1).join(" ") || "",
+//         };
+//       }
+
+//       let text = extractTextWithEmojis(el).trim();
+
+//       if (
+//         quotedMessage &&
+//         quotedMessage.text &&
+//         text.includes(quotedMessage.text)
+//       ) {
+//         text = text.replace(quotedMessage.text, "").trim();
+//       }
+
+//       if (senderName !== "Unknown" && text.startsWith(senderName)) {
+//         text = text.replace(senderName, "").trim();
+//       }
+
+//       text = text.replace(/\n?\d{1,2}:\d{2}\s?(am|pm)?$/i, "").trim();
+
+//       const isQuoted = !!quotedMessage;
+//       const isForwarded = !!el.querySelector("span[aria-label*='Forwarded']");
+//       const hasMedia = !!el.querySelector("img, video, audio");
+
+//       messages.push({
+//         id,
+//         text,
+//         sender: {
+//           name: senderName,
+//           number: "",
+//         },
+//         timestamp,
+//         isQuoted,
+//         quotedMessage,
+//         isForwarded,
+//         hasMedia,
+//       });
+//     } catch (err) {
+//       console.warn("[WhatsApp] Failed to parse message:", err);
+//     }
+//   }
+
+//   console.log("[WhatsApp] Fetched last", messages.length, "messages");
+//   chrome.runtime.sendMessage({
+//     action: "changeInfo",
+//     text:
+//       "Done fetching messages..., " + messages.length + " messages fetched.",
+//   });
+
+//   return messages;
+// }
+
 async function getLastNMessages(n) {
   console.log(`[WhatsApp] Fetching last ${n} messages...`);
   const messages = [];
 
-  const messageElements = document.querySelectorAll("div[role='row']");
-
-  const downArrowButton = document.querySelector(
-    "button[aria-label='Scroll to bottom']"
-  );
-
-  if (downArrowButton) {
-    console.log("[WhatsApp] Scrolling to bottom");
-    chrome.runtime.sendMessage({
-      action: "changeInfo",
-      text: "Scrolling to bottom...",
-    });
-    new Promise((resolve) => setTimeout(resolve, 1000));
-    downArrowButton.click();
-    new Promise((resolve) => setTimeout(resolve, 1000));
-    chrome.runtime.sendMessage({
-      action: "changeInfo",
-      text: "Done scrolling to bottom...",
-    });
+  const chatContainer = document.querySelector(
+    ".copyable-area>div[tabindex='0']"
+  ); // main chat scroll container
+  if (!chatContainer) {
+    console.warn("[WhatsApp] Chat container not found!");
+    return [];
   }
 
-  for (let i = messageElements.length - 1; i >= 0 && messages.length < n; i--) {
-    const el = messageElements[i];
+  function extractMessages() {
+    return Array.from(document.querySelectorAll("div[role='row']"));
+  }
 
+  let messageElements = extractMessages();
+
+  // keep scrolling until enough messages are loaded
+  while (messageElements.length < n) {
+    console.log(
+      `[WhatsApp] Currently ${messageElements.length}, need ${n}. Scrolling up...`
+    );
+
+    chrome.runtime.sendMessage({
+      action: "changeInfo",
+      text: `Scrolling up... loaded ${messageElements.length}/${n}`,
+    });
+
+    let prevHeight = chatContainer.scrollHeight;
+    chatContainer.scrollTo(0, 0);
+
+    // flag: wait until new messages are actually loaded
+    await new Promise((resolve) => {
+      const observer = new MutationObserver(() => {
+        let newHeight = chatContainer.scrollHeight;
+        if (newHeight > prevHeight) {
+          observer.disconnect();
+          resolve();
+        }
+      });
+      observer.observe(chatContainer, { childList: true, subtree: true });
+    });
+
+    messageElements = extractMessages();
+  }
+
+  // If more than n, just take last n
+  const neededMessages = messageElements.slice(-n);
+
+  for (let i = neededMessages.length - 1; i >= 0; i--) {
+    const el = neededMessages[i];
     try {
       const id = el.getAttribute("data-id") || `msg-${i}`;
       const timestamp =
         el.querySelector("time")?.getAttribute("datetime") ||
         new Date().toISOString();
 
-      // Sender info (from data-pre-plain-text attribute)
       const meta =
         el
           .querySelector("[data-pre-plain-text]")
           ?.getAttribute("data-pre-plain-text") || "";
       const senderMatch = meta.match(/\]\s(.*?):/);
       const senderName = senderMatch ? senderMatch[1] : "Unknown";
-      const senderNumber = ""; // not available
 
-      // Quoted message
       let quotedMessage = null;
       const quotedContainer = el.querySelector(
         "div[role='button'][aria-label*='Quoted']"
@@ -211,21 +464,12 @@ async function getLastNMessages(n) {
         quotedMessage = {
           sender: quotedContainer.innerText.split("\n")[0] || "Unknown",
           senderNumber: "",
-
           text: quotedContainer.innerText.split("\n").slice(1).join(" ") || "",
-          // text:
-          //   extractTextWithEmojis(quotedContainer)
-          //     .split("\n")
-          //     .slice(1)
-          //     .join(" ")
-          //     .trim() || "",
         };
       }
 
-      // Full text extraction (with emojis)
       let text = extractTextWithEmojis(el).trim();
 
-      // Remove quoted text if duplicated inside
       if (
         quotedMessage &&
         quotedMessage.text &&
@@ -234,30 +478,21 @@ async function getLastNMessages(n) {
         text = text.replace(quotedMessage.text, "").trim();
       }
 
-      // Remove sender prefix if duplicated
       if (senderName !== "Unknown" && text.startsWith(senderName)) {
         text = text.replace(senderName, "").trim();
       }
 
-      // Remove trailing time (like "9:40 pm")
       text = text.replace(/\n?\d{1,2}:\d{2}\s?(am|pm)?$/i, "").trim();
-
-      const isQuoted = !!quotedMessage;
-      const isForwarded = !!el.querySelector("span[aria-label*='Forwarded']");
-      const hasMedia = !!el.querySelector("img, video, audio");
 
       messages.push({
         id,
         text,
-        sender: {
-          name: senderName,
-          number: senderNumber,
-        },
+        sender: { name: senderName, number: "" },
         timestamp,
-        isQuoted,
+        isQuoted: !!quotedMessage,
         quotedMessage,
-        isForwarded,
-        hasMedia,
+        isForwarded: !!el.querySelector("span[aria-label*='Forwarded']"),
+        hasMedia: !!el.querySelector("img, video, audio"),
       });
     } catch (err) {
       console.warn("[WhatsApp] Failed to parse message:", err);
@@ -268,8 +503,7 @@ async function getLastNMessages(n) {
 
   chrome.runtime.sendMessage({
     action: "changeInfo",
-    text:
-      "Done fetching messages..., " + messages.length + " messages fetched.",
+    text: `Done fetching messages..., ${messages.length} messages fetched.`,
   });
 
   return messages;
