@@ -17,16 +17,25 @@ function renderGroups(groups) {
   }
 
   container.innerHTML = '';
+  console.log("Groups: ", groups)
   groups.forEach(group => {
     const card = document.createElement('div');
     card.className = 'group-card';
+    // Create a selector for this group
+    const groupSelector = `div[role="listitem"]:has(span[title="${group.name.replace(/"/g, '\\"')}"])`;
+    
     card.innerHTML = `
       <div class="group-avatar">${group.name.charAt(0).toUpperCase()}</div>
       <div class="group-info">
         <div class="group-name">${group.name}</div>
       </div>
       <span class="unread-badge">${group.unreadCount}</span>
-      <button class="summarize-btn" data-group-id="${group.id}" data-group-name="${group.name}">Summarize</button>
+      <button class="summarize-btn" 
+              data-group-id="${group.id}" 
+              data-group-name="${group.name}"
+              data-group-selector="${groupSelector.replace(/"/g, '&quot;')}">
+        Summarize
+      </button>
     `;
     container.appendChild(card);
   });
@@ -37,10 +46,35 @@ function renderGroups(groups) {
   });
 }
 
-async function handleSummarizeClick(event) {
-  const button = event.target;
-  const groupId = button.dataset.groupId;
-  const groupName = button.dataset.groupName;
+// // Store the last clicked group element
+// let lastClickedGroupElement = null;
+
+// // Update the renderGroups function to store the element
+// function renderGroups(groups) {
+//   const container = document.getElementById('group-list-container');
+//   if (!groups || groups.length === 0) {
+//   // Add event listeners to the new buttons
+async function handleSummarizeClick(event, group = null) {
+  const button = event?.target?.closest('.summarize-btn');
+  if (!button) return;
+
+  // Get the group ID, name and selector from the button's data attributes
+  let groupId, groupName, groupSelector;
+  if (group) {
+    groupId = group.id;
+    groupName = group.name;
+    groupSelector = group.selector;
+  } else {
+    groupId = button.dataset.groupId;
+    groupName = button.dataset.groupName;
+    groupSelector = button.dataset.groupSelector;
+  }
+
+  // If we still don't have a selector, create a basic one
+  if (!groupSelector && groupName) {
+    groupSelector = `div[role="listitem"]:has(span[title="${groupName.replace(/"/g, '\\"')}"])`;
+  }
+
   const n = document.querySelector('input[name="n-value"]:checked').value;
 
   const resultsPanel = document.getElementById('results-panel');
@@ -58,7 +92,11 @@ async function handleSummarizeClick(event) {
       return;
     }
 
-    const response = await getLastNMessages(n);
+    const response = await getLastNMessages(n, {
+      id: groupId,
+      name: groupName,
+      selector: groupSelector
+    });
     const messages = response.messages;
     console.log(`Got ${messages.length} messages for group ${groupId}`);
 
