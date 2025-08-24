@@ -12,7 +12,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       sendResponse({ group: getCurrentGroupInfo() });
       break;
     case "GET_LAST_N_MESSAGES":
-      getLastNMessages(msg.n, msg.groupInfo).then((messages) => {
+      console.log("Fetching last, here with sender, ", msg.n, "messages...");
+      getLastNMessages(msg.n).then((messages) => {
         sendResponse({ messages });
       });
       break;
@@ -139,164 +140,6 @@ function getCurrentGroupInfo() {
   return null;
 }
 
-async function getLastNMessages(n, groupInfo = null) {
-  console.log(`[WhatsApp] Fetching last ${n} messages...`);
-  const messages = new Map();
-
-  console.log("[WhatsApp] Group info:", groupInfo);
-
-  // If groupInfo is provided and contains a selector, find and click the element
-  if (groupInfo && groupInfo.selector) {
-    console.log(`[WhatsApp] Opening chat for ${groupInfo.name}...`);
-    try {
-      // Find the element using the stored selector
-      const groupElement = document.querySelector(groupInfo.selector);
-
-      console.log("Group element:", groupElement);
-      if (groupElement) {
-        console.log("Group element found");
-        // Scroll the element into view and click it
-        groupElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for scroll
-        groupElement.click();
-        await new Promise((resolve) => setTimeout(resolve, 1500)); // Wait for chat to load
-      } else {
-        console.warn(
-          `[WhatsApp] Could not find group element with selector: ${groupInfo.selector}`
-        );
-      }
-    } catch (error) {
-      console.error("[WhatsApp] Error opening chat:", error);
-    }
-  }
-
-  // Try multiple selectors for the message container with retries
-  const containerSelectors = [
-    // Modern WhatsApp Web
-    'div[data-testid="conversation-panel-messages"]',
-    'div[role="log"]',
-    // Fallback selectors
-    'div[data-testid="msg-container"]',
-    'div[class*="message-"]',
-    'div[class*="msg-"]',
-    'div[class*="conversation-"]',
-    'div[class*="chat-"]',
-    'div[class*="pane-body"]',
-    'div[class*="pane-body"] > div',
-    'div[class*="pane-body"] > div > div',
-    'div[class*="pane-body"] > div > div > div',
-  ];
-
-  let messageContainer = null;
-  const maxAttempts = 3;
-  let attempts = 0;
-
-  // Try to find the message container with retries
-  while (!messageContainer && attempts < maxAttempts) {
-    for (const selector of containerSelectors) {
-      messageContainer = document.querySelector(selector);
-      if (messageContainer) {
-        console.log(`Found message container with selector: ${selector}`);
-        break;
-      }
-    }
-
-    if (!messageContainer) {
-      attempts++;
-      console.log(
-        `[WhatsApp] Message container not found, retrying (${attempts}/${maxAttempts})...`
-      );
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait before retry
-    }
-  }
-
-  if (!messageContainer) {
-    console.error(
-      "[WhatsApp] Message container not found. Tried selectors:",
-      containerSelectors
-    );
-    console.log("[WhatsApp] Document structure:", {
-      bodyChildren: Array.from(document.body.children).map((el) => ({
-        tag: el.tagName,
-        id: el.id,
-        classes: Array.from(el.classList),
-        role: el.getAttribute("role"),
-      })),
-    });
-    throw new Error(
-      "Could not find message container. Make sure you are on a WhatsApp Web chat page."
-    );
-  }
-
-  if (!messageContainer) {
-    console.error("[WhatsApp] Message container not found after all attempts");
-    return [];
-  }
-
-  let lastMessageCount = 0;
-  let stableScrolls = 0;
-  const maxStableScrolls = 3; // Stop after 3 scrolls with no new messages
-  const scrollStep = 500; // Pixels to scroll each time
-  let scrollPosition = 0;
-  const maxScrolls = 20; // Maximum number of scroll attempts
-  let scrollCount = 0;
-
-  // First, try to load some messages by scrolling up
-  while (scrollCount < maxScrolls && messages.size < n) {
-    // Scroll up to load more messages
-    messageContainer.scrollTop = scrollPosition;
-    await new Promise((resolve) => setTimeout(resolve, 800)); // Wait for messages to load
-
-    // Get visible messages
-    const visibleMessages = getVisibleMessages();
-    let newMessagesFound = false;
-
-    // Add new messages to our map
-    visibleMessages.forEach((msg) => {
-      if (!messages.has(msg.id)) {
-        messages.set(msg.id, msg);
-        newMessagesFound = true;
-      }
-    });
-
-    console.log(
-      `[WhatsApp] Found ${visibleMessages.length} messages, ${messages.size} unique so far`
-    );
-
-    // Check if we've found enough messages
-    if (messages.size >= n) {
-      console.log(`[WhatsApp] Found requested ${n} messages`);
-      break;
-    }
-
-    // Update scroll position for next iteration
-    scrollPosition += scrollStep;
-
-    // Check if we've reached the top
-    if (messageContainer.scrollTop === 0) {
-      console.log("[WhatsApp] Reached the top of the chat");
-      break;
-    }
-
-    // Check if we're not making progress
-    if (!newMessagesFound) {
-      stableScrolls++;
-      if (stableScrolls >= maxStableScrolls) {
-        console.log(
-          `[WhatsApp] No new messages found after ${stableScrolls} attempts, stopping`
-        );
-        break;
-      }
-    } else {
-      stableScrolls = 0; // Reset counter if we found new messages
-    }
-
-    scrollCount++;
-  }
-
-  return Array.from(messages.values()).slice(-n);
-}
-
 function extractTextWithEmojis(el) {
   let text = "";
 
@@ -317,11 +160,30 @@ function extractTextWithEmojis(el) {
   return text;
 }
 
-async function getLastNMessages(n, groupInfo = null) {
+async function getLastNMessages(n) {
   console.log(`[WhatsApp] Fetching last ${n} messages...`);
   const messages = [];
 
   const messageElements = document.querySelectorAll("div[role='row']");
+
+  const downArrowButton = document.querySelector(
+    "button[aria-label='Scroll to bottom']"
+  );
+
+  if (downArrowButton) {
+    console.log("[WhatsApp] Scrolling to bottom");
+    chrome.runtime.sendMessage({
+      action: "changeInfo",
+      text: "Scrolling to bottom...",
+    });
+    new Promise((resolve) => setTimeout(resolve, 1000));
+    downArrowButton.click();
+    new Promise((resolve) => setTimeout(resolve, 1000));
+    chrome.runtime.sendMessage({
+      action: "changeInfo",
+      text: "Done scrolling to bottom...",
+    });
+  }
 
   for (let i = messageElements.length - 1; i >= 0 && messages.length < n; i--) {
     const el = messageElements[i];
@@ -402,6 +264,8 @@ async function getLastNMessages(n, groupInfo = null) {
       console.warn("[WhatsApp] Failed to parse message:", err);
     }
   }
+
+  console.log("[WhatsApp] Fetched last", messages.length, "messages");
 
   return messages;
 }

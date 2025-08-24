@@ -1,51 +1,58 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>WA Group Summarizer</title>
-    <link rel="stylesheet" href="popup.css">
+    <title>WA Chat Summarizer</title>
+    <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <div class="header">
       <h1>WA Group Summarizer</h1>
       <button id="settings-btn" title="Settings">⚙️</button>
     </div>
-
     <div class="container">
-      <!-- This part is shown if API key is set -->
-      <div id="main-content" style="display: none">
+      <div id="main-content">
         <div class="n-selection">
           <span>Messages to summarize:</span>
           <div class="radio-group">
-            <input type="radio" id="n50" name="n-value" value="50" checked>
+            <input type="radio" id="n50" name="n-value" value="50" checked />
             <label for="n50">50</label>
-            <input type="radio" id="n100" name="n-value" value="100">
+            <input type="radio" id="n100" name="n-value" value="100" />
             <label for="n100">100</label>
-            <input type="radio" id="n200" name="n-value" value="200">
+            <input type="radio" id="n200" name="n-value" value="200" />
             <label for="n200">200</label>
-            <input type="radio" id="n300" name="n-value" value="300">
+            <input type="radio" id="n300" name="n-value" value="300" />
             <label for="n300">300</label>
           </div>
         </div>
 
-        <div id="group-list-container">
-          <p>Loading groups...</p>
-          <!-- Group list will be rendered here -->
-        </div>
+        <button id="summarize-current" class="summarize-btn">
+          Summarize Current Chat
+        </button>
 
-        <div id="results-panel" style="display: none;">
-          <h2 id="results-group-name"></h2>
-          <div id="summary-output">
-            <!-- Summary will be rendered here -->
-          </div>
-          <div class="results-actions">
-            <button id="copy-summary">Copy</button>
-            <label>
-              <input type="checkbox" id="save-summary-toggle">
-              Save Summary
-            </label>
-          </div>
+        <div id="summary-output" style="display: none; margin-top: 15px">
+          <div class="summary-content"></div>
         </div>
+      </div>
 
+      <div id="loading" style="display: none">
+        <div class="spinner"></div>
+        <p>Generating summary...</p>
+      </div>
+
+      <div id="status" style="display: none; color: #ff4444; margin-top: 10px"></div>
+
+      <div
+        id="error"
+        style="display: none; color: #ff4444; margin-top: 10px"
+      ></div>
+
+      <button id="copy-summary">Copy</button>
+      <label>
+        <input type="checkbox" id="save-summary-toggle" />
+        Save Summary
+      </label>
+      <div id="results-panel" style="display: none">
+        <h2 id="results-group-name"></h2>
       </div>
 
       <!-- This part is shown if API key is NOT set -->

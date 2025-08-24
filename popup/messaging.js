@@ -84,11 +84,10 @@ export async function getCurrentGroup() {
   }
 }
 
-export async function getLastNMessages(n, groupInfo = null) {
+export async function getLastNMessages(n) {
   try {
     console.log(`Fetching last ${n} messages...`);
-    console.log("Group info: from messaging", groupInfo);
-    const response = await sendMessage("GET_LAST_N_MESSAGES", { n, groupInfo });
+    const response = await sendMessage("GET_LAST_N_MESSAGES", { n });
     console.log(`Received ${response?.messages?.length || 0} messages`);
     return response;
   } catch (error) {

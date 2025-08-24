@@ -109,13 +109,8 @@ export async function summarizeMessages(apiKey, model = MODEL, messages) {
     const summaryText = data.candidates[0].content.parts[0].text;
     console.log("[Gemini] Successfully received summary text");
 
-    const summary = parseSummary(summaryText);
-    console.log("[Gemini] Parsed summary:", {
-      tldrLength: summary.tldr?.length,
-      bulletCount: summary.bullets?.length,
-    });
-
-    return summary;
+    // Return the raw text response from the LLM
+    return summaryText;
   } catch (error) {
     console.error("[Gemini] Error in summarizeMessages:", error);
     throw error; // Re-throw to allow caller to handle
@@ -141,11 +136,33 @@ The entire response should be in English.
 Messages to summarize:
 `;
 
-  messages.slice(0, 300).forEach((msg, index) => {
-    const timestamp = msg.timestampISO || new Date().toISOString();
-    const sender = msg.sender || "Unknown";
-    const text = msg.text || "";
-    prompt += `[${timestamp}] ${sender}: ${text}\n`;
+  messages.slice(-300).forEach((msg) => {
+    const timestamp = msg.timestamp || new Date().toISOString();
+    const senderName = msg.sender?.name || "Unknown";
+    const senderNumber = msg.sender?.number ? ` (${msg.sender.number})` : "";
+    const sender = `${senderName}${senderNumber}`;
+
+    let line = `[${timestamp}] ${sender}: `;
+
+    if (msg.isForwarded) {
+      line += "(Forwarded) ";
+    }
+
+    if (msg.isQuoted && msg.quotedMessage) {
+      const qmSender = msg.quotedMessage.sender || "Unknown";
+      const qmText = msg.quotedMessage.text || "";
+      line += `Quoted ${qmSender}: "${qmText}" → `;
+    }
+
+    if (msg.text) {
+      line += msg.text;
+    }
+
+    if (msg.hasMedia) {
+      line += " [Media attached]";
+    }
+
+    prompt += line.trim() + "\n";
   });
 
   prompt +=
@@ -158,50 +175,50 @@ Messages to summarize:
  * Parses the raw text response from Gemini into structured format
  * @private
  */
-function parseSummary(text) {
-  console.log("[Gemini] Parsing summary response");
+// function parseSummary(text) {
+//   console.log("[Gemini] Parsing summary response");
 
-  if (!text) {
-    console.warn("[Gemini] Empty response text received");
-    return { tldr: "No summary available", bullets: [] };
-  }
+//   if (!text) {
+//     console.warn("[Gemini] Empty response text received");
+//     return { tldr: "No summary available", bullets: [] };
+//   }
 
-  // Extract TLDR section
-  const tldrMatch = text.match(
-    /tl;dr:?\s*([\s\S]*?)(?=\n\s*\n|\s*Key Points:|$)/i
-  );
-  let tldr = tldrMatch ? tldrMatch[1].trim() : "";
+//   // Extract TLDR section
+//   const tldrMatch = text.match(
+//     /tl;dr:?\s*([\s\S]*?)(?=\n\s*\n|\s*Key Points:|$)/i
+//   );
+//   let tldr = tldrMatch ? tldrMatch[1].trim() : "";
 
-  // If no TLDR found, try to extract first paragraph
-  if (!tldr) {
-    const firstPara = text.split("\n\n")[0] || "";
-    tldr = firstPara.trim();
-  }
+//   // If no TLDR found, try to extract first paragraph
+//   if (!tldr) {
+//     const firstPara = text.split("\n\n")[0] || "";
+//     tldr = firstPara.trim();
+//   }
 
-  // Extract bullet points
-  const bulletsMatch = text.match(/Key Points:([\s\S]*?)(?=\n\s*\n|$)/i);
-  let bulletsText = bulletsMatch ? bulletsMatch[1] : "";
+//   // Extract bullet points
+//   const bulletsMatch = text.match(/Key Points:([\s\S]*?)(?=\n\s*\n|$)/i);
+//   let bulletsText = bulletsMatch ? bulletsMatch[1] : "";
 
-  // If no bullet points section found, try to extract list items
-  if (!bulletsText) {
-    const listItems = text.match(/^[-•*]\s*(.+)$/gim) || [];
-    bulletsText = listItems.join("\n");
-  }
+//   // If no bullet points section found, try to extract list items
+//   if (!bulletsText) {
+//     const listItems = text.match(/^[-•*]\s*(.+)$/gim) || [];
+//     bulletsText = listItems.join("\n");
+//   }
 
-  // Clean and format bullets
-  const bullets = bulletsText
-    .split("\n")
-    .map((item) =>
-      item
-        .trim()
-        .replace(/^[-•*]\s*/, "")
-        .trim()
-    )
-    .filter((item) => item.length > 0);
+//   // Clean and format bullets
+//   const bullets = bulletsText
+//     .split("\n")
+//     .map((item) =>
+//       item
+//         .trim()
+//         .replace(/^[-•*]\s*/, "")
+//         .trim()
+//     )
+//     .filter((item) => item.length > 0);
 
-  console.debug("[Gemini] Parsed summary:", {
-    tldrLength: tldr?.length,
-    bulletCount: bullets?.length,
-  });
-  return { tldr, bullets };
-}
+//   console.debug("[Gemini] Parsed summary:", {
+//     tldrLength: tldr?.length,
+//     bulletCount: bullets?.length,
+//   });
+//   return { tldr, bullets };
+// }
