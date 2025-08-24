@@ -71,6 +71,50 @@ function deleteAllSummaries() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", restoreOptions);
+function loadSavedMessages() {
+  const messagesList = document.getElementById('saved-messages-list');
+  messagesList.innerHTML = '<p>Loading saved messages...</p>';
+
+  chrome.storage.local.get(null, (items) => {
+    // Remove extension settings
+    delete items.apiKey;
+    delete items.model;
+    delete items.defaultN;
+    delete items.saveSummaries;
+
+    const messages = Object.entries(items);
+    
+    if (messages.length === 0) {
+      messagesList.innerHTML = '<p>No saved messages found.</p>';
+      return;
+    }
+
+    messagesList.innerHTML = '';
+    
+    // Sort messages by timestamp (newest first)
+    messages.sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
+    
+    messages.forEach(([key, data]) => {
+      if (data && data.summary) {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'saved-message';
+        messageElement.innerHTML = `
+          <div class="message-header">${data.chatTitle || 'Untitled Chat'}</div>
+          <div class="message-content">${data.summary}</div>
+          <div class="message-meta">
+            ${new Date(data.timestamp).toLocaleString()}
+          </div>
+        `;
+        messagesList.appendChild(messageElement);
+      }
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  restoreOptions();
+  loadSavedMessages();
+});
+
 document.getElementById("options-form").addEventListener("submit", saveOptions);
 document.getElementById("delete-all-summaries").addEventListener("click", deleteAllSummaries);

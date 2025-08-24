@@ -45,6 +45,38 @@
         border: 1px solid #ffe58f;
         border-radius: 4px;
       }
+      .saved-messages {
+        margin-top: 2em;
+        padding: 1em;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+      }
+      .saved-message {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #eee;
+      }
+      .saved-message:last-child {
+        border-bottom: none;
+      }
+      .message-header {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .message-content {
+        white-space: pre-wrap;
+        background-color: #f9f9f9;
+        padding: 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        max-height: 150px;
+        overflow-y: auto;
+      }
+      .message-meta {
+        font-size: 0.8em;
+        color: #666;
+        margin-top: 5px;
+      }
       .danger-zone {
         margin-top: 2em;
         padding: 1em;
@@ -111,7 +143,14 @@
     <div class="danger-zone">
       <h3>Danger Zone</h3>
       <p>Delete all locally stored summaries. This action cannot be undone.</p>
-      <button id="delete-all-summaries">Delete All Summaries</button>
+      <button id="delete-all-summaries" class="danger-button">Delete All Summaries</button>
+    </div>
+
+    <div class="saved-messages">
+      <h3>Saved Messages</h3>
+      <div id="saved-messages-list">
+        <!-- Saved messages will be inserted here -->
+      </div>
     </div>
 
     <script src="options.js"></script>

@@ -148,7 +148,6 @@ function extractTextWithEmojis(el) {
     .querySelector("span");
 
   textNode.childNodes.forEach((node) => {
-    console.log("node", node);
     if (node.nodeType === Node.TEXT_NODE) {
       text += node.textContent;
     } else if (node.nodeName === "IMG" && node.alt) {
@@ -266,6 +265,12 @@ async function getLastNMessages(n) {
   }
 
   console.log("[WhatsApp] Fetched last", messages.length, "messages");
+
+  chrome.runtime.sendMessage({
+    action: "changeInfo",
+    text:
+      "Done fetching messages..., " + messages.length + " messages fetched.",
+  });
 
   return messages;
 }
