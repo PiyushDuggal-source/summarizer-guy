@@ -1,0 +1,5 @@
+# Chrome extension build ignores
+.DS_Store
+node_modules/
+dist/
+.zip
