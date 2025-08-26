@@ -1,158 +1,186 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-  <head>
-    <title>WhatsApp Summarizer Settings</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        padding: 1em;
-        width: 400px;
-      }
-      .form-group {
-        margin-bottom: 1em;
-      }
-      label {
-        display: block;
-        margin-bottom: 0.25em;
-        font-weight: bold;
-      }
-      input[type="text"],
-      input[type="password"] {
-        width: 100%;
-        padding: 8px;
-        box-sizing: border-box;
-      }
-      .radio-group label {
-        display: inline-block;
-        margin-right: 1em;
-        font-weight: normal;
-      }
-      .note {
-        font-size: 0.9em;
-        color: #555;
-        background-color: #f0f0f0;
-        padding: 0.5em;
-        border-radius: 4px;
-      }
-      #status {
-        margin-top: 1em;
-        font-weight: bold;
-      }
-      .privacy-notice {
-        margin-top: 2em;
-        padding: 1em;
-        background-color: #fffbe6;
-        border: 1px solid #ffe58f;
-        border-radius: 4px;
-      }
-      .saved-messages {
-        margin-top: 2em;
-        padding: 1em;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
-      }
-      .saved-message {
-        padding: 10px;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #eee;
-      }
-      .saved-message:last-child {
-        border-bottom: none;
-      }
-      .message-header {
-        font-weight: bold;
-        margin-bottom: 5px;
-      }
-      .message-content {
-        white-space: pre-wrap;
-        background-color: #f9f9f9;
-        padding: 8px;
-        border-radius: 4px;
-        font-family: monospace;
-        max-height: 150px;
-        overflow-y: auto;
-      }
-      .message-meta {
-        font-size: 0.8em;
-        color: #666;
-        margin-top: 5px;
-      }
-      .danger-zone {
-        margin-top: 2em;
-        padding: 1em;
-        border: 1px solid #f5c6cb;
-        border-radius: 4px;
-        background-color: #f8d7da;
-      }
-      .danger-zone button {
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        cursor: pointer;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>WhatsApp Summarizer Settings</h1>
 
-    <form id="options-form">
-      <div class="form-group">
-        <label for="apiKey">Gemini API Key</label>
-        <input type="password" id="apiKey" name="apiKey" required />
-      </div>
+<head>
+  <title>WhatsApp Summarizer Settings</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1em;
+      width: 400px;
+    }
 
-      <div class="form-group">
-        <label for="model">AI Model</label>
-        <input type="text" id="model" name="model" readonly />
-      </div>
+    .form-group {
+      margin-bottom: 1em;
+    }
 
-      <div class="form-group">
-        <label>Default messages to summarize (N)</label>
-        <div class="radio-group">
-          <label><input type="radio" name="defaultN" value="50" /> 50</label>
-          <label><input type="radio" name="defaultN" value="100" /> 100</label>
-          <label><input type="radio" name="defaultN" value="200" /> 200</label>
-          <label><input type="radio" name="defaultN" value="300" /> 300</label>
-        </div>
-      </div>
+    label {
+      display: block;
+      margin-bottom: 0.25em;
+      font-weight: bold;
+    }
 
-      <div class="form-group">
-        <label for="saveSummaries">
-          <input type="checkbox" id="saveSummaries" name="saveSummaries" />
-          Save summaries to local history by default
-        </label>
-      </div>
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
 
-      <div class="form-group">
-        <label>Language Behavior</label>
-        <p class="note">Summaries will always be translated to English.</p>
-      </div>
+    .radio-group label {
+      display: inline-block;
+      margin-right: 1em;
+      font-weight: normal;
+    }
 
-      <button type="submit">Save Settings</button>
-    </form>
+    .note {
+      font-size: 0.9em;
+      color: #555;
+      background-color: #f0f0f0;
+      padding: 0.5em;
+      border-radius: 4px;
+    }
 
-    <div id="status"></div>
+    #status {
+      margin-top: 1em;
+      font-weight: bold;
+    }
 
-    <div class="privacy-notice">
-      <h3>Privacy Notice</h3>
-      <p>When you summarize a chat, the messages are sent to Google's Gemini API for processing. Your API key is stored securely in your browser's sync storage and is never shared with anyone else.</p>
-      <p>You can choose to save summaries locally in your browser's storage. This data is not synced and will be deleted if you clear your browser data or uninstall the extension.</p>
+    .privacy-notice {
+      margin-top: 2em;
+      padding: 1em;
+      background-color: #fffbe6;
+      border: 1px solid #ffe58f;
+      border-radius: 4px;
+    }
+
+    .saved-messages {
+      margin-top: 2em;
+      padding: 1em;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+
+    .saved-message {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .saved-message:last-child {
+      border-bottom: none;
+    }
+
+    .message-header {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .message-content {
+      white-space: pre-wrap;
+      background-color: #f9f9f9;
+      padding: 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .message-meta {
+      font-size: 0.8em;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .danger-zone {
+      margin-top: 2em;
+      padding: 1em;
+      border: 1px solid #f5c6cb;
+      border-radius: 4px;
+      background-color: #f8d7da;
+    }
+
+    .danger-zone button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>WhatsApp Summarizer Settings</h1>
+
+  <form id="options-form">
+    <div class="form-group">
+      <label for="apiKey">Gemini API Key</label>
+      <input type="password" id="apiKey" name="apiKey" required />
     </div>
 
-    <div class="danger-zone">
-      <h3>Danger Zone</h3>
-      <p>Delete all locally stored summaries. This action cannot be undone.</p>
-      <button id="delete-all-summaries" class="danger-button">Delete All Summaries</button>
+    <div class="form-group">
+      <label for="model">AI Model</label>
+      <input type="text" id="model" name="model" readonly />
     </div>
 
-    <div class="saved-messages">
-      <h3>Saved Messages</h3>
-      <div id="saved-messages-list">
-        <!-- Saved messages will be inserted here -->
+    <div class="form-group">
+      <label>Default messages to summarize (N)</label>
+      <div class="radio-group">
+        <label><input type="radio" name="defaultN" value="50" /> 50</label>
+        <label><input type="radio" name="defaultN" value="100" /> 100</label>
+        <label><input type="radio" name="defaultN" value="200" /> 200</label>
+        <label><input type="radio" name="defaultN" value="300" /> 300</label>
       </div>
     </div>
 
-    <script src="options.js"></script>
-  </body>
+    <div class="form-group">
+      <label for="saveSummaries">
+        <input type="checkbox" id="saveSummaries" name="saveSummaries" />
+        Save summaries to local history by default
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label>Language Behavior</label>
+      <p class="note">Summaries will always be translated to English.</p>
+    </div>
+
+    <button type="submit">Save Settings</button>
+  </form>
+
+  <div id="status"></div>
+
+  <div class="privacy-notice">
+    <h3>Privacy Notice</h3>
+    <p>
+      When you summarize a chat, the messages are sent to Google's Gemini API
+      for processing. Your API key is stored securely in your browser's sync
+      storage and is never shared with anyone else.
+    </p>
+    <p>
+      You can choose to save summaries locally in your browser's storage. This
+      data is not synced and will be deleted if you clear your browser data or
+      uninstall the extension.
+    </p>
+  </div>
+
+  <div class="danger-zone">
+    <h3>Danger Zone</h3>
+    <p>Delete all locally stored summaries. This action cannot be undone.</p>
+    <button id="delete-all-summaries" class="danger-button">
+      Delete All Summaries
+    </button>
+  </div>
+
+  <div class="saved-messages">
+    <h3>Saved Messages</h3>
+    <div id="saved-messages-list">
+      <!-- Saved messages will be inserted here -->
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+
 </html>
