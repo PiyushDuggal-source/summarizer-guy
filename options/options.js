@@ -71,44 +71,82 @@ function deleteAllSummaries() {
   });
 }
 
-function loadSavedMessages() {
-  const messagesList = document.getElementById('saved-messages-list');
-  messagesList.innerHTML = '<p>Loading saved messages...</p>';
+async function loadSavedMessages() {
+  const messagesList = document.getElementById("saved-messages-list");
+  if (!messagesList) {
+    console.error("Saved messages container not found");
+    return;
+  }
 
-  chrome.storage.local.get(null, (items) => {
-    // Remove extension settings
-    delete items.apiKey;
-    delete items.model;
-    delete items.defaultN;
-    delete items.saveSummaries;
+  try {
+    // Show loading state
+    messagesList.innerHTML = "<p>Loading saved messages...</p>";
 
-    const messages = Object.entries(items);
-    
-    if (messages.length === 0) {
-      messagesList.innerHTML = '<p>No saved messages found.</p>';
+    // Get all stored data
+    const items = await new Promise((resolve, reject) => {
+      chrome.storage.local.get(null, (result) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve(result);
+        }
+      });
+    });
+
+    // Filter out extension settings and get only summary data
+    const summaryEntries = Object.entries(items).filter(([key, data]) => {
+      return (
+        data &&
+        typeof data === "object" &&
+        data.summary &&
+        !["apiKey", "model", "defaultN", "saveSummaries"].includes(key)
+      );
+    });
+
+    if (summaryEntries.length === 0) {
+      messagesList.innerHTML = "<p>No saved messages found.</p>";
       return;
     }
 
-    messagesList.innerHTML = '';
-    
-    // Sort messages by timestamp (newest first)
-    messages.sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
-    
-    messages.forEach(([key, data]) => {
-      if (data && data.summary) {
-        const messageElement = document.createElement('div');
-        messageElement.className = 'saved-message';
-        messageElement.innerHTML = `
-          <div class="message-header">${data.chatTitle || 'Untitled Chat'}</div>
-          <div class="message-content">${data.summary}</div>
-          <div class="message-meta">
-            ${new Date(data.timestamp).toLocaleString()}
-          </div>
-        `;
-        messagesList.appendChild(messageElement);
-      }
-    });
-  });
+    // Sort by timestamp (newest first) and create DOM elements efficiently
+    const sortedMessages = summaryEntries
+      .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0))
+      .map(([key, data]) => createMessageElement(data, key));
+
+    // Clear container and append all messages at once
+    messagesList.innerHTML = "";
+    messagesList.append(...sortedMessages);
+  } catch (error) {
+    console.error("Error loading saved messages:", error);
+    messagesList.innerHTML = `<p style="color: #ff4444;">Error loading messages: ${error.message}</p>`;
+  }
+}
+
+/**
+ * Creates a DOM element for a saved message
+ * @param {Object} data - Message data object
+ * @param {string} key - Storage key
+ * @returns {HTMLElement} - Created message element
+ */
+function createMessageElement(data, key) {
+  const messageElement = document.createElement("div");
+  messageElement.className = "saved-message";
+  messageElement.setAttribute("data-key", key);
+
+  const header = document.createElement("div");
+  header.className = "message-header";
+  header.textContent = data.chatTitle || "Untitled Chat";
+
+  const content = document.createElement("div");
+  content.className = "message-content";
+  content.textContent = data.summary;
+
+  const meta = document.createElement("div");
+  meta.className = "message-meta";
+  meta.textContent = new Date(data.timestamp).toLocaleString();
+
+  messageElement.append(header, content, meta);
+  return messageElement;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -117,4 +155,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.getElementById("options-form").addEventListener("submit", saveOptions);
-document.getElementById("delete-all-summaries").addEventListener("click", deleteAllSummaries);
+document
+  .getElementById("delete-all-summaries")
+  .addEventListener("click", deleteAllSummaries);
