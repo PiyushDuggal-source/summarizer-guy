@@ -181,6 +181,93 @@ function handleCustomInputChange() {
   }
 }
 
+/**
+ * Handle API key setup form submission
+ */
+async function handleApiKeySetup() {
+  const apiKeyInput = document.getElementById("api-key-input");
+  const saveSummariesCheckbox = document.getElementById(
+    "save-summaries-default"
+  );
+
+  const apiKey = apiKeyInput.value.trim();
+  const saveSummaries = saveSummariesCheckbox.checked;
+
+  // Validate API key
+  if (!apiKey) {
+    showApiKeyError("Please enter your API key");
+    return;
+  }
+
+  if (!apiKey.startsWith("AIza")) {
+    showApiKeyError("API key should start with 'AIza'");
+    return;
+  }
+
+  try {
+    // Save settings to storage with default values
+    await new Promise((resolve, reject) => {
+      chrome.storage.sync.set(
+        {
+          apiKey,
+          model: "gemini-2.0-flash-lite", // Default model
+          defaultN: 100, // Default message count
+          saveSummaries,
+        },
+        () => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+
+    // Switch to main interface
+    showMainInterface();
+
+    // Set default values in main interface
+    const defaultRadio = document.querySelector(
+      'input[name="n-value"][value="100"]'
+    );
+    if (defaultRadio) {
+      defaultRadio.checked = true;
+    }
+
+    document.getElementById("save-summary-toggle").checked = saveSummaries;
+  } catch (error) {
+    console.error("Error saving API key:", error);
+    showApiKeyError(`Failed to save: ${error.message}`);
+  }
+}
+
+/**
+ * Show API key error message
+ * @param {string} message - Error message to display
+ */
+function showApiKeyError(message) {
+  const errorElement = document.getElementById("api-key-error");
+  errorElement.textContent = message;
+  errorElement.style.display = "block";
+}
+
+/**
+ * Show the main extension interface
+ */
+function showMainInterface() {
+  document.getElementById("api-key-setup").style.display = "none";
+  document.getElementById("main-interface").style.display = "block";
+}
+
+/**
+ * Show the API key setup interface
+ */
+function showApiKeySetup() {
+  document.getElementById("api-key-setup").style.display = "block";
+  document.getElementById("main-interface").style.display = "none";
+}
+
 function handleCopyClick() {
   const summaryOutput = document.getElementById("summary-output");
   navigator.clipboard
@@ -220,6 +307,12 @@ function saveSummary(summary) {
 
 // Main function to initialize the popup
 async function initializePopup() {
+  // Add event listeners for API key setup
+  document
+    .getElementById("save-api-key")
+    .addEventListener("click", handleApiKeySetup);
+
+  // Add event listeners for main interface
   document
     .getElementById("settings-btn")
     .addEventListener("click", openOptionsPage);
@@ -242,36 +335,54 @@ async function initializePopup() {
     .getElementById("custom-n-input")
     .addEventListener("input", handleCustomInputChange);
 
-  const mainContent = document.getElementById("main-content");
-  const optionsPrompt = document.getElementById("options-prompt");
-  const saveSummaryToggle = document.getElementById(
-    "save-summary-toggle-container"
-  );
+  // Check if API key exists and show appropriate interface
+  try {
+    const { apiKey } = await new Promise((resolve, reject) => {
+      chrome.storage.sync.get(["apiKey"], (result) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve(result);
+        }
+      });
+    });
 
+    if (apiKey) {
+      // API Key exists, show the main interface
+      showMainInterface();
+
+      // Load other settings
+      const { saveSummaries } = await new Promise((resolve, reject) => {
+        chrome.storage.sync.get(["saveSummaries"], (result) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(result);
+          }
+        });
+      });
+
+      document.getElementById("save-summary-toggle").checked = saveSummaries;
+    } else {
+      // API Key is missing, show the setup form
+      showApiKeySetup();
+    }
+  } catch (error) {
+    console.error("Error checking API key:", error);
+    // Show setup form on error
+    showApiKeySetup();
+  }
+
+  // Check if we're on WhatsApp Web
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const tab = tabs[0];
-    if (tab.url && tab.url.startsWith("https://web.whatsapp.com")) {
-      // Check if API key is set.
-      chrome.storage.sync.get(
-        ["apiKey", "saveSummaries"],
-        ({ apiKey, saveSummaries }) => {
-          if (apiKey) {
-            // API Key exists, show the main UI
-            mainContent.style.display = "block";
-            optionsPrompt.style.display = "none";
-            document.getElementById("save-summary-toggle").checked =
-              saveSummaries;
-          } else {
-            // API Key is missing, prompt user to set it.
-            saveSummaryToggle.style.display = "none";
-            mainContent.style.display = "none";
-            optionsPrompt.style.display = "block";
-          }
-        }
-      );
-    } else {
-      mainContent.innerHTML =
-        "<p>This extension only works on WhatsApp Web.</p><p>Please open WhatsApp Web and try again.</p>";
+    if (!tab.url || !tab.url.startsWith("https://web.whatsapp.com")) {
+      // Not on WhatsApp Web, show message
+      const mainContent = document.getElementById("main-content");
+      if (mainContent) {
+        mainContent.innerHTML =
+          "<p>This extension only works on WhatsApp Web.</p><p>Please open WhatsApp Web and try again.</p>";
+      }
     }
   });
 }

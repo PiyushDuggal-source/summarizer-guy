@@ -6,7 +6,7 @@
   </head>
   <body>
     <!-- API Key Setup Form (shown when no API key is set) -->
-    <div id="api-key-setup" style="display: none;">
+    <div id="api-key-setup" style="display: none">
       <div class="header">
         <h1>WA Group Summarizer</h1>
       </div>
@@ -14,58 +14,60 @@
         <div class="setup-form">
           <h3>Setup Required</h3>
           <p>Please enter your Gemini API key to get started.</p>
-          
+
           <div class="form-group">
             <label for="api-key-input">Gemini API Key:</label>
-            <input 
-              type="password" 
-              id="api-key-input" 
+            <input
+              type="password"
+              id="api-key-input"
               placeholder="Enter your API key (starts with AIza...)"
-              style="width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"
+              style="
+                width: 100%;
+                padding: 8px;
+                margin: 8px 0;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                box-sizing: border-box;
+              "
             />
-            <div id="api-key-error" style="color: #ff4444; font-size: 12px; margin-top: 5px; display: none;"></div>
+            <div
+              id="api-key-error"
+              style="
+                color: #ff4444;
+                font-size: 12px;
+                margin-top: 5px;
+                display: none;
+              "
+            ></div>
           </div>
-          
-          <div class="form-group">
-            <label for="model-select">AI Model:</label>
-            <select 
-              id="model-select" 
-              style="width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"
-            >
-              <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite (Recommended)</option>
-              <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-              <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label for="default-n-select">Default Messages:</label>
-            <select 
-              id="default-n-select" 
-              style="width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"
-            >
-              <option value="50">50 messages</option>
-              <option value="100" selected>100 messages</option>
-              <option value="200">200 messages</option>
-              <option value="300">300 messages</option>
-            </select>
-          </div>
-          
+
           <div class="form-group">
             <label>
               <input type="checkbox" id="save-summaries-default" />
               Save summaries to local history by default
             </label>
           </div>
-          
-          <button id="save-api-key" class="summarize-btn" style="width: 100%; margin-top: 15px;">
+
+          <button
+            id="save-api-key"
+            class="summarize-btn"
+            style="width: 100%; margin-top: 15px"
+          >
             Save & Continue
           </button>
-          
-          <div class="help-text" style="margin-top: 15px; font-size: 12px; color: #666;">
+
+          <div
+            class="help-text"
+            style="margin-top: 15px; font-size: 12px; color: #666"
+          >
             <p><strong>How to get your API key:</strong></p>
-            <ol style="margin: 5px 0; padding-left: 20px;">
-              <li>Visit <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+            <ol style="margin: 5px 0; padding-left: 20px">
+              <li>
+                Visit
+                <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                  >Google AI Studio</a
+                >
+              </li>
               <li>Sign in with your Google account</li>
               <li>Click "Create API Key"</li>
               <li>Copy the key (starts with AIza...)</li>
@@ -76,7 +78,7 @@
     </div>
 
     <!-- Main Extension Interface (shown when API key is set) -->
-    <div id="main-interface" style="display: none;">
+    <div id="main-interface" style="display: none">
       <div class="header">
         <h1>WA Group Summarizer</h1>
         <button
