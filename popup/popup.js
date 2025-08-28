@@ -57,7 +57,11 @@ async function handleSummarizeClick(event) {
   const button = event?.target?.closest(".summarize-btn");
   if (!button) return;
 
-  const n = document.querySelector('input[name="n-value"]:checked').value;
+  const n = getSelectedMessageCount();
+  if (n === null) {
+    // Show error and return
+    return;
+  }
 
   const summaryOutput = document.getElementById("summary-output");
   const errorOutput = document.getElementById("error");
@@ -102,6 +106,78 @@ async function handleSummarizeClick(event) {
     console.error("Error summarizing messages:", error);
     errorOutput.innerHTML = `<p>Error: ${error.message}</p>`;
     errorOutput.style.display = "block";
+  }
+}
+
+/**
+ * Get the selected message count, handling custom input validation
+ * @returns {number|null} The selected message count or null if invalid
+ */
+function getSelectedMessageCount() {
+  const selectedRadio = document.querySelector('input[name="n-value"]:checked');
+  if (!selectedRadio) return null;
+
+  if (selectedRadio.value === "custom") {
+    const customInput = document.getElementById("custom-n-input");
+    const customValue = parseInt(customInput.value, 10);
+
+    if (isNaN(customValue) || customValue < 1 || customValue > 50) {
+      showCustomInputError("Please enter a number between 1 and 50");
+      return null;
+    }
+
+    hideCustomInputError();
+    return customValue;
+  }
+
+  return parseInt(selectedRadio.value, 10);
+}
+
+/**
+ * Show error message for custom input
+ * @param {string} message - Error message to display
+ */
+function showCustomInputError(message) {
+  const errorElement = document.getElementById("custom-input-error");
+  errorElement.textContent = message;
+  errorElement.style.display = "inline";
+}
+
+/**
+ * Hide error message for custom input
+ */
+function hideCustomInputError() {
+  const errorElement = document.getElementById("custom-input-error");
+  errorElement.style.display = "none";
+}
+
+/**
+ * Handle radio button changes to show/hide custom input
+ */
+function handleRadioChange() {
+  const customContainer = document.getElementById("custom-input-container");
+  const customInput = document.getElementById("custom-n-input");
+  const customRadio = document.getElementById("n-custom");
+
+  if (customRadio.checked) {
+    customContainer.style.display = "block";
+    customInput.focus();
+  } else {
+    customContainer.style.display = "none";
+    customInput.value = "";
+    hideCustomInputError();
+  }
+}
+
+/**
+ * Handle custom input changes to validate and clear errors
+ */
+function handleCustomInputChange() {
+  const customInput = document.getElementById("custom-n-input");
+  const value = parseInt(customInput.value, 10);
+
+  if (customInput.value === "" || (value >= 1 && value <= 50)) {
+    hideCustomInputError();
   }
 }
 
@@ -157,8 +233,20 @@ async function initializePopup() {
     .getElementById("summarize-current")
     .addEventListener("click", handleSummarizeClick);
 
+  // Add event listeners for radio buttons and custom input
+  document.querySelectorAll('input[name="n-value"]').forEach((radio) => {
+    radio.addEventListener("change", handleRadioChange);
+  });
+
+  document
+    .getElementById("custom-n-input")
+    .addEventListener("input", handleCustomInputChange);
+
   const mainContent = document.getElementById("main-content");
   const optionsPrompt = document.getElementById("options-prompt");
+  const saveSummaryToggle = document.getElementById(
+    "save-summary-toggle-container"
+  );
 
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const tab = tabs[0];
@@ -173,19 +261,9 @@ async function initializePopup() {
             optionsPrompt.style.display = "none";
             document.getElementById("save-summary-toggle").checked =
               saveSummaries;
-
-            // Fetch and display groups
-            // getGroupsWithUnread()
-            //   .then(response => {
-            //     renderGroups(response.groups);
-            //   })
-            //   .catch(error => {
-            //     console.error('Error getting groups:', error);
-            //     const container = document.getElementById('group-list-container');
-            //     container.innerHTML = `<p>Error: ${error.message}</p>`;
-            //   });
           } else {
             // API Key is missing, prompt user to set it.
+            saveSummaryToggle.style.display = "none";
             mainContent.style.display = "none";
             optionsPrompt.style.display = "block";
           }
