@@ -1,6 +1,6 @@
 /* popup/popup.css */
 :root {
-  --background-color: #fff;
+  --background-color: #FFFFFF;
   --text-color: #202124;
   --button-bg: #25D366;
   --button-hover-bg: #128C7E;
@@ -9,17 +9,6 @@
   --card-bg: #fff;
   --error-color: #f44336;
   --success-color: #4caf50;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background-color: #111b21;
-    --text-color: #e9edef;
-    --button-bg: #00a884;
-    --button-hover-bg: #017561;
-    --border-color: #2f3b43;
-    --card-bg: #202c33;
-  }
 }
 
 body {
