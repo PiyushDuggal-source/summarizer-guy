@@ -110,7 +110,11 @@ async function loadSavedMessages() {
 
     // Sort by timestamp (newest first) and create DOM elements efficiently
     const sortedMessages = summaryEntries
-      .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0))
+      .sort(([, a], [, b]) => {
+        const timeA = a.timestamp || a.date || 0;
+        const timeB = b.timestamp || b.date || 0;
+        return new Date(timeB) - new Date(timeA);
+      })
       .map(([key, data]) => createMessageElement(data, key));
 
     // Clear container and append all messages at once
@@ -135,7 +139,20 @@ function createMessageElement(data, key) {
 
   const header = document.createElement("div");
   header.className = "message-header";
-  header.textContent = data.chatTitle || "Untitled Chat";
+
+  // Create chat title with message count
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "chat-title";
+  titleSpan.textContent = data.chatTitle || "Untitled Chat";
+
+  const countSpan = document.createElement("span");
+  countSpan.className = "message-count";
+  countSpan.textContent = data.messageCount
+    ? `(${data.messageCount} messages)`
+    : "";
+
+  header.appendChild(titleSpan);
+  header.appendChild(countSpan);
 
   const content = document.createElement("div");
   content.className = "message-content";
@@ -143,7 +160,11 @@ function createMessageElement(data, key) {
 
   const meta = document.createElement("div");
   meta.className = "message-meta";
-  meta.textContent = new Date(data.timestamp).toLocaleString();
+
+  // Handle both timestamp and date fields for backward compatibility
+  const timestamp = data.timestamp || data.date;
+  const date = timestamp ? new Date(timestamp) : new Date();
+  meta.textContent = date.toLocaleString();
 
   messageElement.append(header, content, meta);
   return messageElement;

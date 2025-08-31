@@ -127,17 +127,37 @@ function listGroupsWithUnread() {
 }
 
 function getCurrentGroupInfo() {
-  const headerElement = document.querySelector("header");
-  if (headerElement) {
-    const nameElement = headerElement.querySelector("span[title]");
+  try {
+    // Look for the group container
+    const groupElement = document.querySelector(
+      'div[role="button"][data-tab="6"]'
+    );
+    if (!groupElement) {
+      console.warn("No group element found");
+      return null;
+    }
+
+    // First check for span with title (members usually show here)
+    const memberElement = groupElement.querySelector("span[title]");
+
+    // Then check for span without title (group name usually here)
+    const nameElement = groupElement.querySelector("span:not([title])");
+
     if (nameElement) {
+      const name = nameElement.textContent.trim();
       return {
-        id: nameElement.title, // Using title as a temporary ID
-        name: nameElement.title,
+        id: name.replace(/\s+/g, "_").toLowerCase(),
+        name: name,
+        members: memberElement ? memberElement.getAttribute("title") : null,
       };
     }
+
+    console.warn("Could not find group name");
+    return null;
+  } catch (error) {
+    console.error("Error in getCurrentGroupInfo:", error);
+    return null;
   }
-  return null;
 }
 
 function extractTextWithEmojis(el) {

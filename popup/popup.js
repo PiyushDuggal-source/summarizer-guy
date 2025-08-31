@@ -1,6 +1,6 @@
 console.log("Popup script loaded.");
 // popup/popup.js
-import { getLastNMessages } from "./messaging.js";
+import { getLastNMessages, getCurrentGroup } from "./messaging.js";
 import { summarizeMessages } from "../gemini.js";
 
 // Helper to open the options page
@@ -100,7 +100,9 @@ async function handleSummarizeClick(event) {
     const saveToggle = document.getElementById("save-summary-toggle");
     saveToggle.checked = saveSummaries;
     if (saveSummaries) {
-      saveSummary(summaryText);
+      // Get current group info for saving
+      const chatInfo = await getCurrentGroup();
+      saveSummary(summaryText, n, chatInfo);
     }
   } catch (error) {
     console.error("Error summarizing messages:", error);
@@ -284,25 +286,57 @@ function handleCopyClick() {
     });
 }
 
-function handleSaveToggleChange(event) {
+async function handleSaveToggleChange(event) {
   const saveSummaries = event.target.checked;
   chrome.storage.sync.set({ saveSummaries });
 
   if (saveSummaries) {
-    const summary = document.getElementById("summary-output").innerHTML;
-    // This is a simplified way to get the summary data. A better way would be to store it in a variable.
-    saveSummary(summary);
+    const summary = document.getElementById("summary-output").innerText;
+    // Get current group info and message count for saving
+    try {
+      const chatInfo = await getCurrentGroup();
+      const n = getSelectedMessageCount() || 0;
+      saveSummary(summary, n, chatInfo);
+    } catch (error) {
+      console.error("Error saving summary on toggle:", error);
+    }
   }
 }
 
-function saveSummary(summary) {
-  const key = `summary_${new Date().toISOString()}`;
-  chrome.storage.local.set(
-    { [key]: { summary, date: new Date().toISOString() } },
-    () => {
-      console.log(`Summary saved`);
+async function saveSummary(summary, messageCount, chatInfo = null) {
+  try {
+    // Get current chat/group info if not provided
+    if (!chatInfo) {
+      chatInfo = await getCurrentGroup();
     }
-  );
+
+    // Clean the summary by removing HTML tags and extracting plain text
+    let cleanSummary = summary;
+    if (typeof summary === "string") {
+      // Create a temporary div to parse HTML and extract text
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = summary;
+      cleanSummary = tempDiv.innerText || tempDiv.textContent || summary;
+    }
+
+    const timestamp = new Date().toISOString();
+    const key = `summary_${timestamp}`;
+
+    const summaryData = {
+      summary: cleanSummary,
+      timestamp: timestamp,
+      messageCount: messageCount,
+      chatTitle: chatInfo?.group?.name || "Unknown Chat",
+      chatId: chatInfo?.group?.id || "unknown",
+      date: timestamp,
+    };
+
+    chrome.storage.local.set({ [key]: summaryData }, () => {
+      console.log(`Summary saved with key: ${key}`);
+    });
+  } catch (error) {
+    console.error("Error saving summary:", error);
+  }
 }
 
 // Main function to initialize the popup
