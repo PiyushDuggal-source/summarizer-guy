@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WA Chat Summarizer</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <!-- API Key Setup Form (shown when no API key is set) -->
+    <div id="api-key-setup" style="display: none">
+      <div class="header">
+        <h1>WA Group Summarizer</h1>
+      </div>
+      <div class="container">
+        <div class="setup-form">
+          <h3>Setup Required</h3>
+          <p>Please enter your Gemini API key to get started.</p>
+
+          <div class="form-group">
+            <label for="api-key-input">Gemini API Key:</label>
+            <input
+              type="password"
+              id="api-key-input"
+              placeholder="Enter your API key (starts with AIza...)"
+              style="
+                width: 100%;
+                padding: 8px;
+                margin: 8px 0;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                box-sizing: border-box;
+              "
+            />
+            <div
+              id="api-key-error"
+              style="
+                color: #ff4444;
+                font-size: 12px;
+                margin-top: 5px;
+                display: none;
+              "
+            ></div>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="save-summaries-default" />
+              Save summaries to local history by default
+            </label>
+          </div>
+
+          <button
+            id="save-api-key"
+            class="summarize-btn"
+            style="width: 100%; margin-top: 15px"
+          >
+            Save & Continue
+          </button>
+
+          <div
+            class="help-text"
+            style="margin-top: 15px; font-size: 12px; color: #666"
+          >
+            <p><strong>How to get your API key:</strong></p>
+            <ol style="margin: 5px 0; padding-left: 20px">
+              <li>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                  >Google AI Studio</a
+                >
+              </li>
+              <li>Sign in with your Google account</li>
+              <li>Click "Create API Key"</li>
+              <li>Copy the key (starts with AIza...)</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Extension Interface (shown when API key is set) -->
+    <div id="main-interface" style="display: none">
+      <div class="header">
+        <h1>WA Group Summarizer</h1>
+        <button
+          id="settings-btn"
+          title="Settings"
+          type="button"
+          aria-label="Settings"
+        >
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 64 64"
+            data-name="Icon Set - Black"
+            id="Icon_Set_-_Black"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="#ffffff"
+            stroke="#ffffff"
+          >
+            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g
+              id="SVGRepo_tracerCarrier"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></g>
+            <g id="SVGRepo_iconCarrier">
+              <defs>
+                <style>
+                  .cls-1 {
+                    fill: none;
+                    stroke: #fff;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                    stroke-width: 8px;
+                  }
+
+                  .cls-2 {
+                    fill: #000;
+                  }
+                </style>
+              </defs>
+              <g id="Slider">
+                <line class="cls-1" x1="10" x2="54" y1="16" y2="16"></line>
+                <line class="cls-1" x1="10" x2="54" y1="32" y2="32"></line>
+                <line class="cls-1" x1="10" x2="54" y1="48" y2="48"></line>
+                <path d="M20,8a8,8,0,1,0,8,8,8,8,0,0,0-8-8Z"></path>
+                <path d="M44,24a8,8,0,1,0,8,8,8,8,0,0,0-8-8Z"></path>
+                <path d="M20,40a8,8,0,1,0,8,8,8,8,0,0,0-8-8Z"></path>
+                <circle class="cls-2" cx="20" cy="16" r="3"></circle>
+                <circle class="cls-2" cx="44" cy="32" r="3"></circle>
+                <circle class="cls-2" cx="20" cy="48" r="3"></circle>
+              </g>
+            </g>
+          </svg>
+        </button>
+      </div>
+      <div class="container">
+        <div id="main-content">
+          <div class="n-selection">
+            <span>Messages to summarize:</span>
+            <div class="radio-group">
+              <input type="radio" id="n50" name="n-value" value="50" checked />
+              <label for="n50">50</label>
+              <input type="radio" id="n100" name="n-value" value="100" />
+              <label for="n100">100</label>
+              <input type="radio" id="n200" name="n-value" value="200" />
+              <label for="n200">200</label>
+              <input type="radio" id="n300" name="n-value" value="300" />
+              <label for="n300">300</label>
+              <input type="radio" id="n-custom" name="n-value" value="custom" />
+              <label for="n-custom">Custom</label>
+            </div>
+
+            <div
+              id="custom-input-container"
+              style="display: none; margin-top: 10px"
+            >
+              <label for="custom-n-input">Custom number (1-50):</label>
+              <input
+                type="number"
+                id="custom-n-input"
+                min="1"
+                max="50"
+                placeholder="Enter 1-50"
+                style="
+                  width: 80px;
+                  margin-left: 10px;
+                  padding: 4px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              />
+              <span
+                id="custom-input-error"
+                style="
+                  color: #ff4444;
+                  margin-left: 10px;
+                  font-size: 12px;
+                  display: none;
+                "
+              ></span>
+            </div>
+          </div>
+
+          <button id="summarize-current" class="summarize-btn">
+            Summarize Current Chat
+          </button>
+
+          <div id="summary-output" style="display: none; margin-top: 15px">
+            <div class="summary-content"></div>
+          </div>
+        </div>
+
+        <div id="loading" style="display: none">
+          <div class="spinner"></div>
+          <p>Generating summary...</p>
+        </div>
+
+        <div
+          id="status"
+          style="display: none; color: green; margin-top: 10px"
+        ></div>
+
+        <div
+          id="error"
+          style="display: none; color: #ff4444; margin-top: 10px"
+        ></div>
+
+        <div id="save-summary-toggle-container" style="display: none;">
+          <button id="copy-summary">Copy</button>
+          <label>
+            <input type="checkbox" id="save-summary-toggle" />
+            Save Summary
+          </label>
+        </div>
+        <div id="results-panel" style="display: none">
+          <h2 id="results-group-name"></h2>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./sidepanel.js"></script>
+  </body>
+</html>
