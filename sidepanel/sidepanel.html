@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WA Chat Summarizer</title>
     <link rel="stylesheet" href="sidepanel.css" />
   </head>
   <body>
     <!-- API Key Setup Form (shown when no API key is set) -->
-    <div id="api-key-setup" style="display: none">
+    <div id="api-key-setup" class="panel-section panel-hidden">
       <div class="header">
         <h1>WA Group Summarizer</h1>
       </div>
@@ -21,47 +23,25 @@
               type="password"
               id="api-key-input"
               placeholder="Enter your API key (starts with AIza...)"
-              style="
-                width: 100%;
-                padding: 8px;
-                margin: 8px 0;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                box-sizing: border-box;
-              "
             />
-            <div
-              id="api-key-error"
-              style="
-                color: #ff4444;
-                font-size: 12px;
-                margin-top: 5px;
-                display: none;
-              "
-            ></div>
+            <div id="api-key-error" class="error-message"></div>
           </div>
 
-          <div class="form-group">
-            <label>
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
               <input type="checkbox" id="save-summaries-default" />
+              <span class="checkmark"></span>
               Save summaries to local history by default
             </label>
           </div>
 
-          <button
-            id="save-api-key"
-            class="summarize-btn"
-            style="width: 100%; margin-top: 15px"
-          >
+          <button id="save-api-key" class="summarize-btn primary-btn">
             Save & Continue
           </button>
 
-          <div
-            class="help-text"
-            style="margin-top: 15px; font-size: 12px; color: #666"
-          >
+          <div class="help-text">
             <p><strong>How to get your API key:</strong></p>
-            <ol style="margin: 5px 0; padding-left: 20px">
+            <ol>
               <li>
                 <a href="https://aistudio.google.com/app/apikey" target="_blank"
                   >Google AI Studio</a
@@ -77,7 +57,7 @@
     </div>
 
     <!-- Main Extension Interface (shown when API key is set) -->
-    <div id="main-interface" style="display: none">
+    <div id="main-interface" class="panel-section panel-hidden">
       <div class="header">
         <h1>WA Group Summarizer</h1>
         <button
@@ -90,11 +70,7 @@
             width="30"
             height="30"
             viewBox="0 0 64 64"
-            data-name="Icon Set - Black"
-            id="Icon_Set_-_Black"
             xmlns="http://www.w3.org/2000/svg"
-            fill="#000"
-            stroke="#ffffff"
           >
             <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
             <g
@@ -107,14 +83,13 @@
                 <style>
                   .cls-1 {
                     fill: none;
-                    stroke: #000;
+                    stroke: currentColor;
                     stroke-linecap: round;
                     stroke-linejoin: round;
                     stroke-width: 8px;
                   }
-
                   .cls-2 {
-                    fill: #000;
+                    fill: currentColor;
                   }
                 </style>
               </defs>
@@ -137,7 +112,7 @@
         <div id="main-content">
           <div class="n-selection">
             <span>Messages to summarize:</span>
-            <div class="radio-group">
+            <div class="radio-group" role="radiogroup">
               <input type="radio" id="n50" name="n-value" value="50" checked />
               <label for="n50">50</label>
               <input type="radio" id="n100" name="n-value" value="100" />
@@ -150,69 +125,47 @@
               <label for="n-custom">Custom</label>
             </div>
 
-            <div
-              id="custom-input-container"
-              style="display: none; margin-top: 10px"
-            >
+            <div id="custom-input-container" class="custom-input-container">
               <label for="custom-n-input">Custom number (1-50):</label>
               <input
                 type="number"
                 id="custom-n-input"
                 min="1"
                 max="50"
-                placeholder="Enter 1-50"
-                style="
-                  width: 80px;
-                  margin-left: 10px;
-                  padding: 4px;
-                  border: 1px solid #ccc;
-                  border-radius: 4px;
-                "
+                placeholder="1-50"
               />
-              <span
-                id="custom-input-error"
-                style="
-                  color: #ff4444;
-                  margin-left: 10px;
-                  font-size: 12px;
-                  display: none;
-                "
-              ></span>
+              <span id="custom-input-error" class="error-message"></span>
             </div>
           </div>
 
-          <button id="summarize-current" class="summarize-btn">
+          <button id="summarize-current" class="summarize-btn primary-btn">
             Summarize Current Chat
           </button>
 
-          <div id="summary-output" style="display: none; margin-top: 15px">
+          <div id="summary-output" class="summary-output">
             <div class="summary-content"></div>
           </div>
         </div>
 
-        <div id="loading" style="display: none">
+        <div id="loading" class="loading-section">
           <div class="spinner"></div>
           <p>Generating summary...</p>
         </div>
 
-        <div
-          id="status"
-          style="display: none; color: green; margin-top: 10px"
-        ></div>
+        <div id="status" class="status-message status-success"></div>
+        <div id="error" class="status-message status-error"></div>
 
-        <div
-          id="error"
-          style="display: none; color: #ff4444; margin-top: 10px"
-        ></div>
-
-        <div id="save-summary-toggle-container" style="display: none;">
-          <button id="copy-summary">Copy</button>
-          <label>
-            <input type="checkbox" id="save-summary-toggle" />
-            Save Summary
-          </label>
+        <div id="save-summary-toggle-container" class="summary-actions">
+          <button id="copy-summary" class="secondary-btn">Copy</button>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="save-summary-toggle" />
+              <span class="checkmark"></span>
+              Save Summary
+            </label>
+          </div>
         </div>
-        <div id="results-panel" style="display: none">
+        <div id="results-panel" class="results-panel">
           <h2 id="results-group-name"></h2>
         </div>
       </div>
