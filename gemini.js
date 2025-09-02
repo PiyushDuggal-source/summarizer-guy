@@ -15,9 +15,6 @@ export async function summarizeMessages(apiKey, model = MODEL, messages) {
     messageCount: messages?.length,
   });
 
-  console.log("[Gemini] Model:", model);
-  console.log("[Gemini] Messages:", messages);
-
   if (!apiKey) {
     const errorMsg = "No API key provided for Gemini";
     console.error("[Gemini] Error:", errorMsg);
@@ -44,30 +41,30 @@ export async function summarizeMessages(apiKey, model = MODEL, messages) {
         },
       ],
       generationConfig: {
-        temperature: 0.3,
+        temperature: 0.5,
         topK: 1,
         topP: 1,
         maxOutputTokens: 2048,
         stopSequences: [],
       },
-      safetySettings: [
-        {
-          category: "HARM_CATEGORY_HARASSMENT",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE",
-        },
-        {
-          category: "HARM_CATEGORY_HATE_SPEECH",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE",
-        },
-        {
-          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE",
-        },
-        {
-          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE",
-        },
-      ],
+      // safetySettings: [
+      //   {
+      //     category: "HARM_CATEGORY_HARASSMENT",
+      //     threshold: "BLOCK_MEDIUM_AND_ABOVE",
+      //   },
+      //   {
+      //     category: "HARM_CATEGORY_HATE_SPEECH",
+      //     threshold: "BLOCK_MEDIUM_AND_ABOVE",
+      //   },
+      //   {
+      //     category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+      //     threshold: "BLOCK_MEDIUM_AND_ABOVE",
+      //   },
+      //   {
+      //     category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+      //     threshold: "BLOCK_MEDIUM_AND_ABOVE",
+      //   },
+      // ],
     };
 
     console.log("[Gemini] Sending request to Gemini API...");
@@ -125,48 +122,69 @@ function createPrompt(messages) {
   console.log("[Gemini] Creating prompt from messages");
 
   let prompt = `You are a helpful assistant that summarizes WhatsApp group chats. 
-The following is a list of messages from a group chat. 
+You will be given a list of messages, each containing:
+- sender name
+- text content
+- whether it is a quoted reply
+- whether it is forwarded
+- whether it contains media (image, video, audio)
+- timestamp
 
-Please provide:
-1. A short summary (tl;dr) - 2-4 sentences
-2. A list of 5-8 key points in bullet points
+Your task:
+1. **TL;DR (2–4 sentences)**: A concise overview of the main discussion, capturing the key themes, tone, and outcomes.
+2. **Key Points (5–8 bullet points)**: Highlight the most important details such as:
+   - Who raised which ideas or concerns
+   - Any agreements, decisions, or action items
+   - Recurring themes or debates
+   - Notable media shared (e.g., “An image was shared by [Name]”)
+   - Significant quoted replies or forwarded messages
 
-The entire response should be in English.
+Guidelines:
+- Be specific and context-aware. Avoid generic responses like “people discussed various things.”
+- If multiple people shared similar views, group them together.
+- If the conversation is casual (e.g., jokes, greetings), capture the overall vibe briefly.
+- Always write the output in **English**.
 
 Messages to summarize:
 `;
 
-  messages.slice(-300).forEach((msg) => {
-    const timestamp = msg.timestamp || new Date().toISOString();
-    const senderName = msg.sender?.name || "Unknown";
-    const senderNumber = msg.sender?.number ? ` (${msg.sender.number})` : "";
-    const sender = `${senderName}${senderNumber}`;
+  // take last 300 messages, then reverse them
+  messages
+    .slice(-300)
+    .reverse()
+    .forEach((msg) => {
+      const timestamp = msg.timestamp || new Date().toISOString();
+      const senderName = msg.sender?.name || "Unknown";
+      const senderNumber = msg.sender?.number ? ` (${msg.sender.number})` : "";
+      const sender = `${senderName}${senderNumber}`;
 
-    let line = `[${timestamp}] ${sender}: `;
+      let line = `[${timestamp}] ${sender}: `;
 
-    if (msg.isForwarded) {
-      line += "(Forwarded) ";
-    }
+      if (msg.isForwarded) {
+        line += "(Forwarded) ";
+      }
 
-    if (msg.isQuoted && msg.quotedMessage) {
-      const qmSender = msg.quotedMessage.sender || "Unknown";
-      const qmText = msg.quotedMessage.text || "";
-      line += `Quoted ${qmSender}: "${qmText}" → `;
-    }
+      if (msg.isQuoted && msg.quotedMessage) {
+        const qmSender = msg.quotedMessage.sender || "Unknown";
+        const qmText = msg.quotedMessage.text || "";
+        line += `Quoted ${qmSender}: "${qmText}" → `;
+      }
 
-    if (msg.text) {
-      line += msg.text;
-    }
+      if (msg.text) {
+        line += msg.text;
+      }
 
-    if (msg.hasMedia) {
-      line += " [Media attached]";
-    }
+      if (msg.hasMedia) {
+        line += " [Media attached]";
+      }
 
-    prompt += line.trim() + "\n";
-  });
+      prompt += line.trim() + "\n";
+    });
 
   prompt +=
     '\nPlease provide the summary now, starting with "tl;dr:" followed by the key points in bullet points after "Key Points:"';
+
+    console.log("[Gemini] Prompt: ", prompt);
 
   return prompt;
 }
