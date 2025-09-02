@@ -106,9 +106,6 @@ function listGroupsWithUnread() {
             },
           };
 
-          console.log(
-            `Found group: ${groupInfo.name} with ${unreadCount} unread messages`
-          );
           groups.push(groupInfo);
         }
       }
@@ -427,6 +424,31 @@ async function getLastNMessages(n) {
     return Array.from(document.querySelectorAll("div[role='row']"));
   }
 
+  // helper: extract text, emojis, and links
+  function extractTextWithEmojisAndLinks(el) {
+    let parts = new Set();
+
+    // text & emojis inside copyable-text spans
+    const textNodes = el.querySelectorAll("span.selectable-text.copyable-text");
+    textNodes.forEach((node) => {
+      if (node.innerText.trim()) parts.add(node.innerText.trim());
+    });
+
+    // links (explicit hrefs)
+    const linkNodes = el.querySelectorAll("a[href]");
+    linkNodes.forEach((a) => {
+      if (a.href) parts.add(a.href.trim());
+    });
+
+    // link preview / extra text (WhatsApp often puts them in span._ao3e)
+    const previewNodes = el.querySelectorAll("span._ao3e");
+    previewNodes.forEach((span) => {
+      if (span.innerText.trim()) parts.add(span.innerText.trim());
+    });
+
+    return Array.from(parts).join(" ").trim();
+  }
+
   let messageElements = extractMessages();
 
   // keep scrolling until enough messages are loaded
@@ -464,7 +486,7 @@ async function getLastNMessages(n) {
   for (let i = neededMessages.length - 1; i >= 0; i--) {
     const el = neededMessages[i];
     try {
-      const id = el.getAttribute("data-id") || `msg-${i}`;
+      const id = el.firstChild.getAttribute("data-id") || `msg-${i}`;
       const timestamp =
         el.querySelector("time")?.getAttribute("datetime") ||
         new Date().toISOString();
@@ -474,7 +496,15 @@ async function getLastNMessages(n) {
           .querySelector("[data-pre-plain-text]")
           ?.getAttribute("data-pre-plain-text") || "";
       const senderMatch = meta.match(/\]\s(.*?):/);
-      const senderName = senderMatch ? senderMatch[1] : "Unknown";
+
+      let senderName = senderMatch ? senderMatch[1] : "Unknown";
+
+      if (senderName === "Unknown") {
+        const isEmoji = /:$/.test(el.querySelector("[aria-label]").getAttribute("aria-label"))
+        if (isEmoji) {
+          senderName = el.querySelector("[aria-label]").getAttribute("aria-label").replace(":", "");
+        }
+      }
 
       let quotedMessage = null;
       const quotedContainer = el.querySelector(
@@ -488,7 +518,8 @@ async function getLastNMessages(n) {
         };
       }
 
-      let text = extractTextWithEmojis(el).trim();
+      // 🔑 NEW: extract text + emojis + links
+      let text = extractTextWithEmojisAndLinks(el);
 
       if (
         quotedMessage &&
