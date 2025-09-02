@@ -68,6 +68,19 @@ function deleteAllSummaries() {
     setTimeout(() => {
       status.textContent = "";
     }, 2000);
+    loadSavedMessages(); // Refresh the list after deleting all
+  });
+}
+
+function deleteSummary(key) {
+  chrome.storage.local.remove(key, () => {
+    const status = document.getElementById("status");
+    status.textContent = "Summary deleted.";
+    status.style.color = "green";
+    setTimeout(() => {
+      status.textContent = "";
+    }, 2000);
+    loadSavedMessages(); // Refresh the list after deleting individual summary
   });
 }
 
@@ -120,6 +133,16 @@ async function loadSavedMessages() {
     // Clear container and append all messages at once
     messagesList.innerHTML = "";
     messagesList.append(...sortedMessages);
+
+    // Add event listeners to delete buttons
+    document.querySelectorAll(".delete-summary-btn").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        const keyToDelete = event.target.getAttribute("data-key");
+        if (keyToDelete) {
+          deleteSummary(keyToDelete);
+        }
+      });
+    });
   } catch (error) {
     console.error("Error loading saved messages:", error);
     messagesList.innerHTML = `<p style="color: #ff4444;">Error loading messages: ${error.message}</p>`;
@@ -153,6 +176,13 @@ function createMessageElement(data, key) {
 
   header.appendChild(titleSpan);
   header.appendChild(countSpan);
+
+  // Add delete button
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "delete-summary-btn";
+  deleteButton.textContent = "Delete";
+  deleteButton.setAttribute("data-key", key);
+  header.appendChild(deleteButton);
 
   const content = document.createElement("div");
   content.className = "message-content";

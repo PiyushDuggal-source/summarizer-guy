@@ -202,6 +202,36 @@
       .danger-zone button:hover {
         background-color: var(--danger-hover);
       }
+
+      .delete-summary-btn {
+        background-color: var(--danger);
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.8em;
+        font-weight: 500;
+        transition: background-color 0.2s;
+      }
+
+      .delete-summary-btn:hover {
+        background-color: var(--danger-hover);
+      }
+
+      .danger-button {
+        background-color: var(--danger);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-weight: 500;
+      }
+
+      .danger-button:hover {
+        background-color: var(--danger-hover);
+      }
     </style>
   </head>
 
@@ -280,7 +310,7 @@
         <p>
           Delete all locally stored summaries. This action cannot be undone.
         </p>
-        <button id="delete-all-summaries">Delete All Summaries</button>
+        <button id="delete-all-summaries" class="danger-button">Delete All Summaries</button>
       </div>
     </div>
 
