@@ -65,11 +65,14 @@ async function handleSummarizeClick(event) {
 
   const summaryOutput = document.getElementById("summary-output");
   const errorOutput = document.getElementById("error");
-  const saveToggleContainer = document.getElementById("save-summary-toggle-container"); // Get the container
+  const saveToggleContainer = document.getElementById(
+    "save-summary-toggle-container"
+  ); // Get the container
 
   summaryOutput.innerHTML = "<p>Loading summary...</p>";
   summaryOutput.style.display = "block";
   saveToggleContainer.style.display = "none"; // Hide it initially
+  errorOutput.style.display = "none";
 
   try {
     const { apiKey, model, saveSummaries } = await chrome.storage.sync.get([
@@ -84,8 +87,19 @@ async function handleSummarizeClick(event) {
     }
 
     const response = await getLastNMessages(n);
-    const messages = response.messages;
-    console.log(`Got ${messages.length} messages`);
+
+    console.log("Response: ", response);
+
+    if (response?.messages?.error === "NO_CHAT_CONTAINER") {
+      console.error("Error fetching messages: ", response.error);
+      summaryOutput.style.display = "none";
+      errorOutput.innerHTML = `<p>Chat container not found. Please open a chat and try again.</p>`;
+      errorOutput.style.display = "block";
+      return;
+    }
+
+    const messages = response?.messages;
+    console.log(`Got ${messages?.length || 0} messages`);
 
     const summaryText = await summarizeMessages(
       apiKey,
@@ -93,8 +107,10 @@ async function handleSummarizeClick(event) {
       messages
     );
 
+    console.log("Summary text: ", summaryText);
+
     // --- Start of changes for "summaryText.replace is not a function" error ---
-    if (typeof summaryText !== 'string') {
+    if (typeof summaryText !== "string") {
       console.error("summarizeMessages did not return a string:", summaryText);
       summaryOutput.innerHTML = `<p>Error: Failed to generate summary. Unexpected response format.</p>`;
       errorOutput.innerHTML = `<p>Error: Unexpected summary format.</p>`;

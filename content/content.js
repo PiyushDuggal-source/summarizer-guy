@@ -417,7 +417,9 @@ async function getLastNMessages(n) {
   ); // main chat scroll container
   if (!chatContainer) {
     console.warn("[WhatsApp] Chat container not found!");
-    return [];
+    return {
+      error: "NO_CHAT_CONTAINER",
+    };
   }
 
   function extractMessages() {
@@ -500,9 +502,14 @@ async function getLastNMessages(n) {
       let senderName = senderMatch ? senderMatch[1] : "Unknown";
 
       if (senderName === "Unknown") {
-        const isEmoji = /:$/.test(el.querySelector("[aria-label]").getAttribute("aria-label"))
+        const isEmoji = /:$/.test(
+          el.querySelector("[aria-label]").getAttribute("aria-label")
+        );
         if (isEmoji) {
-          senderName = el.querySelector("[aria-label]").getAttribute("aria-label").replace(":", "");
+          senderName = el
+            .querySelector("[aria-label]")
+            .getAttribute("aria-label")
+            .replace(":", "");
         }
       }
 
