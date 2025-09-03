@@ -2,6 +2,12 @@
 
 A powerful Chrome extension that uses Google's Gemini AI to intelligently summarize WhatsApp group conversations. Stay on top of busy group chats with AI-powered summaries that extract key points and provide quick overviews.
 
+<p align="center">
+  <img src="https://github.com/piyushduggal-source/summarizer-guy/blob/main/images/example-image1.png?raw=true" alt="WA Group Summarizer - Main Interface" width="300" height="auto"/>
+  <img src="https://github.com/piyushduggal-source/summarizer-guy/blob/main/images/example-image2.png?raw=true" alt="WA Group Summarizer - Main Interface" width="300" height="auto"/>
+  <img src="https://github.com/piyushduggal-source/summarizer-guy/blob/main/images/example-image3.png?raw=true" alt="WA Group Summarizer - Main Interface" width="100%" height="auto"/>
+</p>
+
 ## ✨ Features
 
 ### 🚀 Core Functionality
