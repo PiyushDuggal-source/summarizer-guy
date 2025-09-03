@@ -44,7 +44,7 @@ function listGroupsWithUnread() {
       if (unreadCount > 0) {
         const nameElement = el.querySelector("span[title]");
         const lastMessageElement = el.querySelector(
-          '[data-testid="last-msg-status"], [data-testid="last-msg"]'
+          '[data-testid="last-msg-status"], [data-testid="last-msg"]',
         );
         const timeElement = el.querySelector("time");
         const avatarElement = el.querySelector("img[src]");
@@ -59,7 +59,7 @@ function listGroupsWithUnread() {
           const groupId = `group-${index}-${Date.now()}`;
           const groupSelector = `div[role="listitem"]:has(span[title="${groupName.replace(
             /"/g,
-            '\\"'
+            '\\"',
           )}"])`;
 
           const groupInfo = {
@@ -84,7 +84,7 @@ function listGroupsWithUnread() {
             // Media and attachments
             hasUnreadMention: !!el.querySelector('[data-testid="mention"]'),
             hasMedia: !!el.querySelector(
-              '[data-testid="media"], [data-testid*="media-"]'
+              '[data-testid="media"], [data-testid*="media-"]',
             ),
 
             // Avatar info
@@ -127,7 +127,7 @@ function getCurrentGroupInfo() {
   try {
     // Look for the group container
     const groupElement = document.querySelector(
-      'div[role="button"][data-tab="6"]'
+      'div[role="button"][data-tab="6"]',
     );
     if (!groupElement) {
       console.warn("No group element found");
@@ -408,12 +408,36 @@ function extractTextWithEmojis(el) {
 //   return messages;
 // }
 
+async function scrollToBottom() {
+  let downArrowButton = document.querySelector(
+    'button[aria-label="Scroll to bottom"]',
+  );
+  while (downArrowButton) {
+    console.log("[WhatsApp] Scrolling to bottom");
+    chrome.runtime.sendMessage({
+      action: "changeInfo",
+      text: "Scrolling to bottom...",
+    });
+    downArrowButton.click();
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for scroll
+    downArrowButton = document.querySelector(
+      'button[aria-label="Scroll to bottom"]',
+    );
+  }
+  chrome.runtime.sendMessage({
+    action: "changeInfo",
+    text: "Done scrolling to bottom...",
+  });
+}
+
 async function getLastNMessages(n) {
   console.log(`[WhatsApp] Fetching last ${n} messages...`);
   const messages = [];
 
+  await scrollToBottom();
+
   const chatContainer = document.querySelector(
-    ".copyable-area>div[tabindex='0']"
+    ".copyable-area>div[tabindex='0']",
   ); // main chat scroll container
   if (!chatContainer) {
     console.warn("[WhatsApp] Chat container not found!");
@@ -456,7 +480,7 @@ async function getLastNMessages(n) {
   // keep scrolling until enough messages are loaded
   while (messageElements.length < n) {
     console.log(
-      `[WhatsApp] Currently ${messageElements.length}, need ${n}. Scrolling up...`
+      `[WhatsApp] Currently ${messageElements.length}, need ${n}. Scrolling up...`,
     );
 
     chrome.runtime.sendMessage({
@@ -497,13 +521,13 @@ async function getLastNMessages(n) {
         el
           .querySelector("[data-pre-plain-text]")
           ?.getAttribute("data-pre-plain-text") || "";
-      const senderMatch = meta.match(/\]\s(.*?):/);
+      const senderMatch = meta.match(/]\s(.*?):/);
 
       let senderName = senderMatch ? senderMatch[1] : "Unknown";
 
       if (senderName === "Unknown") {
         const isEmoji = /:$/.test(
-          el.querySelector("[aria-label]").getAttribute("aria-label")
+          el.querySelector("[aria-label]").getAttribute("aria-label"),
         );
         if (isEmoji) {
           senderName = el
@@ -515,7 +539,7 @@ async function getLastNMessages(n) {
 
       let quotedMessage = null;
       const quotedContainer = el.querySelector(
-        "div[role='button'][aria-label*='Quoted']"
+        "div[role='button'][aria-label*='Quoted']",
       );
       if (quotedContainer) {
         quotedMessage = {
