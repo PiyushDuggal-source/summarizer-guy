@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "WA Group Summarizer",
-  "description": "Summarize WhatsApp group conversations using AI",
+  "name": "WA Chat/Group Summarizer",
+  "description": "Summarize WhatsApp chat/group conversations using AI",
   "version": "0.1.0",
   "action": {
-    "default_title": "Summarize this group",
+    "default_title": "Summarize this chat/group",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
@@ -20,7 +20,7 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "permissions": ["storage", "tabs", "scripting", "activeTab", "sidePanel"],
+  "permissions": ["storage", "tabs", "scripting", "sidePanel"],
   "host_permissions": ["https://web.whatsapp.com/*"],
   "content_scripts": [
     {
