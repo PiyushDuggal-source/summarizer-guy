@@ -31,7 +31,7 @@ export async function summarizeMessages(apiKey, model = MODEL, messages) {
     const prompt = createPrompt(messages);
     console.debug(
       "[Gemini] Created prompt with character length:",
-      prompt.length
+      prompt.length,
     );
 
     const requestBody = {
@@ -91,7 +91,7 @@ export async function summarizeMessages(apiKey, model = MODEL, messages) {
         throw new Error(`API request failed with status ${response.status}`);
       }
       throw new Error(
-        `Gemini API error: ${errorData.error?.message || "Unknown error"}`
+        `Gemini API error: ${errorData.error?.message || "Unknown error"}`,
       );
     }
 
@@ -121,7 +121,7 @@ export async function summarizeMessages(apiKey, model = MODEL, messages) {
 function createPrompt(messages) {
   console.log("[Gemini] Creating prompt from messages");
 
-  let prompt = `You are a helpful assistant that summarizes WhatsApp group chats. 
+  let prompt = `You are a helpful assistant that summarizes WhatsApp group chats.
 You will be given a list of messages, each containing:
 - sender name
 - text content
@@ -138,11 +138,13 @@ Your task:
    - Recurring themes or debates
    - Notable media shared (e.g., “An image was shared by [Name]”)
    - Significant quoted replies or forwarded messages
+3. **Links (if any)**: List all links shared in the conversation. For each link, provide a brief context and the link itself in the format: "[About the link, some small context] - https://example.com".
 
 Guidelines:
 - Be specific and context-aware. Avoid generic responses like “people discussed various things.”
 - If multiple people shared similar views, group them together.
 - If the conversation is casual (e.g., jokes, greetings), capture the overall vibe briefly.
+- If there are any links, create a "Links:" section and list them with context.
 - Always write the output in **English**.
 
 Messages to summarize:
@@ -167,7 +169,7 @@ Messages to summarize:
       if (msg.isQuoted && msg.quotedMessage) {
         const qmSender = msg.quotedMessage.sender || "Unknown";
         const qmText = msg.quotedMessage.text || "";
-        line += `Quoted ${qmSender}: "${qmText}" → `;
+        line += `Quoted ${qmSender}: \"${qmText}\" → `;
       }
 
       if (msg.text) {
@@ -182,9 +184,9 @@ Messages to summarize:
     });
 
   prompt +=
-    '\nPlease provide the summary now, starting with "tl;dr:" followed by the key points in bullet points after "Key Points:"';
+    '\nPlease provide the summary now, starting with "tl;dr:" followed by the key points in bullet points after "Key Points:". If there are any links, add a "Links:" section at the end.';
 
-    console.log("[Gemini] Prompt: ", prompt);
+  console.log("[Gemini] Prompt: ", prompt);
 
   return prompt;
 }
