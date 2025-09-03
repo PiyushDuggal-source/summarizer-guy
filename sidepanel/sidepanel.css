@@ -214,6 +214,8 @@ body {
     white-space: pre-wrap;
     margin-bottom: 12px;
     line-height: 1.6;
+    overflow-wrap: break-word;
+    word-break: break-all;
 }
 
 /* Loading & Status */
@@ -407,6 +409,7 @@ body {
     margin-top: 20px;
     padding-top: 15px;
     border-top: 1px solid var(--border-color);
+    word-break: break-all;
 }
 
 .results-panel h2 {
