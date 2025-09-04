@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "WA Chat/Group Summarizer",
   "description": "Summarize WhatsApp chat/group conversations using AI",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "action": {
     "default_title": "Summarize this chat/group",
     "default_icon": {
