@@ -66,7 +66,7 @@ async function handleSummarizeClick(event) {
   const summaryOutput = document.getElementById("summary-output");
   const errorOutput = document.getElementById("error");
   const saveToggleContainer = document.getElementById(
-    "save-summary-toggle-container"
+    "save-summary-toggle-container",
   ); // Get the container
 
   summaryOutput.innerHTML = "<p>Loading summary...</p>";
@@ -104,7 +104,7 @@ async function handleSummarizeClick(event) {
     const summaryText = await summarizeMessages(
       apiKey,
       model || "gemini-2.0-flash-lite",
-      messages
+      messages,
     );
 
     console.log("Summary text: ", summaryText);
@@ -122,7 +122,7 @@ async function handleSummarizeClick(event) {
     // Display the raw text response from the LLM
     summaryOutput.innerHTML = `<div class="summary-content">${summaryText.replace(
       /\n/g,
-      "<br>"
+      "<br>",
     )}</div>`;
 
     // --- Start of changes for showing copy button ---
@@ -138,7 +138,7 @@ async function handleSummarizeClick(event) {
     }
   } catch (error) {
     console.error("Error summarizing messages:", error);
-    errorOutput.innerHTML = `<p>Error: ${error.message}</p>`;
+    errorOutput.innerHTML = `<p>Error: Please reload the page if you have just installed the extension!</p>`;
     errorOutput.style.display = "block";
     saveToggleContainer.style.display = "none"; // Hide on error
   }
@@ -222,7 +222,7 @@ function handleCustomInputChange() {
 async function handleApiKeySetup() {
   const apiKeyInput = document.getElementById("api-key-input");
   const saveSummariesCheckbox = document.getElementById(
-    "save-summaries-default"
+    "save-summaries-default",
   );
 
   const apiKey = apiKeyInput.value.trim();
@@ -255,7 +255,7 @@ async function handleApiKeySetup() {
           } else {
             resolve();
           }
-        }
+        },
       );
     });
 
@@ -264,7 +264,7 @@ async function handleApiKeySetup() {
 
     // Set default values in main interface
     const defaultRadio = document.querySelector(
-      'input[name="n-value"][value="100"]'
+      'input[name="n-value"][value="100"]',
     );
     if (defaultRadio) {
       defaultRadio.checked = true;
