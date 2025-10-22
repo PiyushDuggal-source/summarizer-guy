@@ -1,0 +1,102 @@
+# Comprehensive Project Description: WA Group Summarizer
+
+## 1. Project Introduction & Purpose
+
+**Project Name:** WA Group Summarizer
+
+**Project Type:** A Google Chrome Extension (Manifest V3) designed to enhance the user experience on WhatsApp Web.
+
+**Core Purpose:** The primary goal of this extension is to combat information overload in busy WhatsApp chats. It leverages a Large Language Model (LLM) to read a given number of recent messages in a conversation and generate a concise, structured summary. This allows users to quickly understand the key points, decisions, and shared information without needing to manually scroll through hundreds of messages.
+
+## 2. Context, Motivation, and Goals
+
+**Motivation:** The project was born out of a common frustration experienced by users of messaging platforms, particularly students and professionals. Group chats, while essential for collaboration, often become flooded with messages, making it difficult and time-consuming to stay updated. The motivation was to create a "TL;DR" (Too Long; Didn't Read) button for WhatsApp, using AI to automate the process of catching up.
+
+**Goals:**
+*   **Primary Goal:** To save users time and reduce the stress associated with managing high-volume group chats.
+*   **Secondary Goal:** To provide a seamless, intuitive, and privacy-respecting user experience that integrates smoothly with the existing WhatsApp Web interface.
+*   **Technical Goal:** To build a robust Chrome extension that effectively scrapes dynamic web content, communicates between different extension components, and integrates with an external AI API.
+
+## 3. Technology Stack
+
+*   **Core Language:** JavaScript (ES6+ with Modules)
+*   **Frontend:** HTML5, CSS3
+*   **AI Service:** Google Gemini API
+*   **AI Model:** `gemini-2.0-flash-lite` (as a default)
+*   **Browser APIs:**
+    *   Chrome Extension APIs (Manifest V3)
+    *   `chrome.storage` (`sync` for settings, `local` for history)
+    *   `chrome.scripting` for executing scripts in the target tab.
+    *   `chrome.tabs` for querying and communicating with the active tab.
+    *   `chrome.runtime` for messaging and lifecycle events.
+    *   `chrome.sidePanel` for the main user interface.
+*   **Development Dependencies:**
+    *   `sharp`: A Node.js library used via a script (`scripts/generate-icons.js`) to generate the required PNG icon sizes from a source SVG.
+
+## 4. Code Type and Architecture
+
+The project is a client-side Google Chrome Extension and does not have a traditional backend server. The code is organized into several distinct components, each with a specific role.
+
+*   **Content Scripts:** Injected directly into the WhatsApp Web page to interact with the DOM.
+*   **UI Scripts/Pages:** HTML, CSS, and JS files that create the user-facing interfaces (Side Panel, Options Page).
+*   **Background Script (Service Worker):** A persistent script that handles browser-level events.
+*   **Helper Modules:** JavaScript modules that encapsulate specific logic (API calls, messaging).
+
+## 5. Functionalities and Features
+
+### 5.1. Core Functionality
+*   **AI-Powered Summarization:** The central feature. It takes a user-defined number of messages (50, 100, 200, 300, or custom) and sends them to the Gemini API to generate a summary. The summary is structured into a "TL;DR" paragraph and "Key Points" in a bulleted list.
+*   **Link Extraction:** The AI prompt specifically instructs the model to find and list all URLs shared in the conversation, providing them in a separate "Links:" section for easy access.
+*   **Message Scraping:** The extension can programmatically scroll up the chat window in WhatsApp Web to load a sufficient number of messages from the DOM for the summary.
+
+### 5.2. User Interface & Experience
+*   **Side Panel UI:** The primary interface is a Chrome Side Panel, which allows the user to interact with the extension without obscuring the main chat window.
+*   **API Key Setup:** On first use, the UI presents a form for the user to enter their Gemini API key, with helpful links on how to obtain one. This form is hidden once the key is saved.
+*   **Summary Display:** Summaries are displayed in a dedicated output area within the side panel.
+*   **Copy & Save:** Users can copy the generated summary to their clipboard with one click or toggle an option to save the summary to their local browser storage.
+
+### 5.3. Settings and Customization
+*   **Options Page:** A dedicated HTML page for managing settings.
+*   **API Key Management:** Users can save and update their Gemini API key.
+*   **Default Preferences:** Users can set a default number of messages to summarize and a default preference for saving summaries.
+*   **History Management:** The options page displays a list of all locally saved summaries. Users can view these past summaries and delete them individually or all at once.
+
+### 5.4. Privacy
+*   **Local Processing:** All message scraping and data handling before the API call occurs locally in the user's browser.
+*   **No Data Collection:** The extension does not collect or store any user messages or personal information on any remote server.
+*   **Secure Storage:** The user's API key is stored using `chrome.storage.sync`, which syncs it across the user's logged-in Chrome instances. Saved summaries are stored in `chrome.storage.local`, which is confined to the user's local machine.
+
+## 6. Code Structure and Workflow
+
+The project follows a standard modular structure for a Chrome Extension:
+
+*   `manifest.json`: The extension's blueprint. It defines permissions (`storage`, `tabs`, `scripting`, `sidePanel`), host permissions for `web.whatsapp.com`, and registers the background script, content scripts, side panel, and options page.
+*   `background.js`: A minimal service worker whose primary job is to listen for the extension's action button click and open the side panel.
+*   `content/content.js`: The workhorse of the extension. It is injected into the WhatsApp Web page and is responsible for all DOM interaction. Its key function, `getLastNMessages(n)`, finds the chat container, programmatically scrolls up to load message history, and parses the DOM to extract text, sender, timestamp, and metadata for each message.
+*   `sidepanel/`: Contains the main UI.
+    *   `sidepanel.html`: The HTML structure for the main user interface.
+    *   `sidepanel.css`: The stylesheet for the main UI.
+    *   `sidepanel.js`: The logic hub. It handles user events (button clicks, radio button selections), orchestrates the summarization process by calling the messaging and Gemini modules, and updates the UI with results, loading states, and errors.
+    *   `messaging.js`: A crucial helper module that abstracts and standardizes the `chrome.tabs.sendMessage` API. It provides clean async functions (`getLastNMessages`, `getCurrentGroup`) for the UI scripts to call, handling the communication with the content script.
+*   `options/`: Contains the settings page.
+    *   `options.html` / `options.js`: Standard HTML and JS for a settings form. The JS handles saving settings to `chrome.storage.sync` and loading/displaying/deleting saved summaries from `chrome.storage.local`.
+*   `gemini.js`: A dedicated module responsible for all interaction with the Google Gemini API. It takes the scraped messages, constructs a detailed, engineered prompt, and uses the `fetch` API to get the summary. This isolates all AI-related logic.
+
+## 7. Important Implementation Details
+
+**Data Flow for Summarization:**
+1.  **Trigger:** User clicks "Summarize" in `sidepanel.js`.
+2.  **Request:** `sidepanel.js` calls `getLastNMessages(n)` from `messaging.js`.
+3.  **Message Passing:** `messaging.js` sends a message to `content.js`.
+4.  **Scraping:** `content.js` executes its DOM scraping logic, scrolling the chat view and parsing message elements to build an array of message objects.
+5.  **Response:** `content.js` returns the message array to `sidepanel.js`.
+6.  **AI Call:** `sidepanel.js` passes the messages to `gemini.js`.
+7.  **Prompt Engineering:** `gemini.js` formats the messages into a structured prompt, instructing the AI to provide a TL;DR, key points, and a list of links.
+8.  **API Fetch:** `gemini.js` makes the `POST` request to the Gemini API endpoint.
+9.  **Display:** The raw text response from the AI is returned to `sidepanel.js`, which then injects it into the side panel's HTML for the user to see.
+
+**State Management:**
+*   The extension is largely stateless.
+*   User configuration (API key, default settings) is persisted in `chrome.storage.sync`.
+*   Summary history is persisted in `chrome.storage.local`.
+*   There is no complex in-memory state; the application flow is re-initiated by user actions in the UI.

@@ -5,11 +5,11 @@
     <title>WhatsApp Summarizer Settings</title>
     <style>
       :root {
-        --primary: #25D366;
-        --primary-hover: #128C7E;
+        --primary: #25d366;
+        --primary-hover: #128c7e;
         --danger: #dc3545;
         --danger-hover: #b02a37;
-        --bg: #FFFFFF;
+        --bg: #ffffff;
         --card-bg: #ffffff;
         --border: #e0e0e0;
         --text: #111827;
@@ -279,6 +279,28 @@
           <p class="note">Summaries will always be translated to English.</p>
         </div>
 
+        <div class="form-group">
+          <label>📝 Summary length</label>
+          <div class="radio-group">
+            <label
+              ><input type="radio" name="summaryLength" value="concise" />
+              Concise</label
+            >
+            <label
+              ><input type="radio" name="summaryLength" value="standard" />
+              Standard</label
+            >
+            <label
+              ><input type="radio" name="summaryLength" value="comprehensive" />
+              Comprehensive</label
+            >
+          </div>
+          <p class="note">
+            Concise: 2-3 sentences. Standard: 3-5 sentences + bullets.
+            Comprehensive: detailed summary with more bullets.
+          </p>
+        </div>
+
         <button type="submit">💾 Save Settings</button>
         <div id="status"></div>
       </form>
@@ -310,7 +332,9 @@
         <p>
           Delete all locally stored summaries. This action cannot be undone.
         </p>
-        <button id="delete-all-summaries" class="danger-button">Delete All Summaries</button>
+        <button id="delete-all-summaries" class="danger-button">
+          Delete All Summaries
+        </button>
       </div>
     </div>
 

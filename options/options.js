@@ -9,6 +9,9 @@ function saveOptions(e) {
     'input[name="defaultN"]:checked'
   ).value;
   const saveSummaries = document.getElementById("saveSummaries").checked;
+  const summaryLength =
+    document.querySelector('input[name="summaryLength"]:checked')?.value ||
+    "standard";
 
   if (!apiKey) {
     const status = document.getElementById("status");
@@ -26,6 +29,7 @@ function saveOptions(e) {
       model: model,
       defaultN: parseInt(defaultN, 10),
       saveSummaries: saveSummaries,
+      summaryLength: summaryLength,
     },
     () => {
       // Update status to let user know options were saved.
@@ -48,6 +52,7 @@ function restoreOptions() {
     model: "gemini-2.0-flash-lite",
     defaultN: 100,
     saveSummaries: false,
+    summaryLength: "standard",
   };
 
   chrome.storage.sync.get(defaults, (items) => {
@@ -57,6 +62,12 @@ function restoreOptions() {
       `input[name="defaultN"][value="${items.defaultN}"]`
     ).checked = true;
     document.getElementById("saveSummaries").checked = items.saveSummaries;
+    // restore summary length radio
+    const summaryLength = items.summaryLength || "standard";
+    const radio = document.querySelector(
+      `input[name="summaryLength"][value="${summaryLength}"]`
+    );
+    if (radio) radio.checked = true;
   });
 }
 

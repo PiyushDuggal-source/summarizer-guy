@@ -66,7 +66,7 @@ async function handleSummarizeClick(event) {
   const summaryOutput = document.getElementById("summary-output");
   const errorOutput = document.getElementById("error");
   const saveToggleContainer = document.getElementById(
-    "save-summary-toggle-container",
+    "save-summary-toggle-container"
   ); // Get the container
 
   summaryOutput.innerHTML = "<p>Loading summary...</p>";
@@ -75,11 +75,15 @@ async function handleSummarizeClick(event) {
   errorOutput.style.display = "none";
 
   try {
-    const { apiKey, model, saveSummaries } = await chrome.storage.sync.get([
-      "apiKey",
-      "model",
-      "saveSummaries",
-    ]);
+    // Get settings including new summaryLength
+    const { apiKey, model, saveSummaries, summaryLength } = await new Promise(
+      (resolve) => {
+        chrome.storage.sync.get(
+          ["apiKey", "model", "saveSummaries", "summaryLength"],
+          (items) => resolve(items)
+        );
+      }
+    );
     if (!apiKey) {
       summaryOutput.innerHTML =
         "<p>API Key not found. Please set it in the options.</p>";
@@ -105,6 +109,7 @@ async function handleSummarizeClick(event) {
       apiKey,
       model || "gemini-2.0-flash-lite",
       messages,
+      summaryLength || "standard"
     );
 
     console.log("Summary text: ", summaryText);
@@ -122,7 +127,7 @@ async function handleSummarizeClick(event) {
     // Display the raw text response from the LLM
     summaryOutput.innerHTML = `<div class="summary-content">${summaryText.replace(
       /\n/g,
-      "<br>",
+      "<br>"
     )}</div>`;
 
     // --- Start of changes for showing copy button ---
@@ -222,7 +227,7 @@ function handleCustomInputChange() {
 async function handleApiKeySetup() {
   const apiKeyInput = document.getElementById("api-key-input");
   const saveSummariesCheckbox = document.getElementById(
-    "save-summaries-default",
+    "save-summaries-default"
   );
 
   const apiKey = apiKeyInput.value.trim();
@@ -255,7 +260,7 @@ async function handleApiKeySetup() {
           } else {
             resolve();
           }
-        },
+        }
       );
     });
 
@@ -264,7 +269,7 @@ async function handleApiKeySetup() {
 
     // Set default values in main interface
     const defaultRadio = document.querySelector(
-      'input[name="n-value"][value="100"]',
+      'input[name="n-value"][value="100"]'
     );
     if (defaultRadio) {
       defaultRadio.checked = true;
@@ -401,6 +406,36 @@ async function initializePopup() {
   document
     .getElementById("custom-n-input")
     .addEventListener("input", handleCustomInputChange);
+
+  // Advanced options toggle and restore/save for summaryLength
+  const advToggle = document.getElementById("advanced-toggle");
+  const advPanel = document.getElementById("advanced-panel");
+  if (advToggle && advPanel) {
+    advToggle.addEventListener("click", () => {
+      advPanel.style.display =
+        advPanel.style.display === "none" ? "block" : "none";
+    });
+  }
+
+  // Restore summaryLength from storage
+  chrome.storage.sync.get({ summaryLength: "standard" }, (items) => {
+    const val = items.summaryLength || "standard";
+    const radio = document.querySelector(
+      `input[name="summaryLength"][value="${val}"]`
+    );
+    if (radio) radio.checked = true;
+  });
+
+  // Save when user changes the summary length in the sidepanel
+  document.querySelectorAll('input[name="summaryLength"]').forEach((radio) => {
+    radio.addEventListener("change", (e) => {
+      try {
+        chrome.storage.sync.set({ summaryLength: e.target.value });
+      } catch (err) {
+        console.error("Failed to save summaryLength:", err);
+      }
+    });
+  });
 
   // Check if API key exists and show appropriate interface
   try {

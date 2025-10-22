@@ -70,11 +70,14 @@ async function handleSummarizeClick(event) {
   summaryOutput.style.display = "block";
 
   try {
-    const { apiKey, model, saveSummaries } = await chrome.storage.sync.get([
-      "apiKey",
-      "model",
-      "saveSummaries",
-    ]);
+    const { apiKey, model, saveSummaries, summaryLength } = await new Promise(
+      (resolve) => {
+        chrome.storage.sync.get(
+          ["apiKey", "model", "saveSummaries", "summaryLength"],
+          (items) => resolve(items)
+        );
+      }
+    );
     if (!apiKey) {
       summaryOutput.innerHTML =
         "<p>API Key not found. Please set it in the options.</p>";
@@ -88,7 +91,8 @@ async function handleSummarizeClick(event) {
     const summaryText = await summarizeMessages(
       apiKey,
       model || "gemini-2.0-flash-lite",
-      messages
+      messages,
+      summaryLength || "standard"
     );
 
     // Display the raw text response from the LLM

@@ -10,7 +10,12 @@ const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${
  * @param {Array} messages - Array of message objects with timestampISO, sender, and text
  * @returns {Promise<{tldr: string, bullets: string[]}>} Summary object with TLDR and bullet points
  */
-export async function summarizeMessages(apiKey, model = MODEL, messages) {
+export async function summarizeMessages(
+  apiKey,
+  model = MODEL,
+  messages,
+  summaryLength = "standard"
+) {
   console.log("[Gemini] Starting message summarization", {
     messageCount: messages?.length,
   });
@@ -28,10 +33,10 @@ export async function summarizeMessages(apiKey, model = MODEL, messages) {
   }
 
   try {
-    const prompt = createPrompt(messages);
+    const prompt = createPrompt(messages, summaryLength);
     console.debug(
       "[Gemini] Created prompt with character length:",
-      prompt.length,
+      prompt.length
     );
 
     const requestBody = {
@@ -91,7 +96,7 @@ export async function summarizeMessages(apiKey, model = MODEL, messages) {
         throw new Error(`API request failed with status ${response.status}`);
       }
       throw new Error(
-        `Gemini API error: ${errorData.error?.message || "Unknown error"}`,
+        `Gemini API error: ${errorData.error?.message || "Unknown error"}`
       );
     }
 
@@ -118,37 +123,30 @@ export async function summarizeMessages(apiKey, model = MODEL, messages) {
  * Creates a prompt for the Gemini API from message history
  * @private
  */
-function createPrompt(messages) {
+function createPrompt(messages, summaryLength = "standard") {
   console.log("[Gemini] Creating prompt from messages");
 
-  let prompt = `You are a helpful assistant that summarizes WhatsApp group chats.
-You will be given a list of messages, each containing:
-- sender name
-- text content
-- whether it is a quoted reply
-- whether it is forwarded
-- whether it contains media (image, video, audio)
-- timestamp
+  // Tune the instruction text based on the requested summary length
+  let tldrGuidance = "";
+  let bulletsGuidance = "";
+  if (summaryLength === "concise") {
+    tldrGuidance =
+      "TL;DR (1-2 sentences): very concise overview focusing only on the main outcome.";
+    bulletsGuidance =
+      "Key Points (2-4 bullet points): only the most important facts or decisions.";
+  } else if (summaryLength === "comprehensive") {
+    tldrGuidance =
+      "TL;DR (3-5 sentences): more detailed overview covering nuances.";
+    bulletsGuidance =
+      "Key Points (8-12 bullet points): include details, action items, and notable media or links.";
+  } else {
+    tldrGuidance =
+      "TL;DR (2-4 sentences): A concise overview of the main discussion, capturing the key themes, tone, and outcomes.";
+    bulletsGuidance =
+      "Key Points (5-8 bullet points): highlight the most important details such as who raised ideas, agreements, decisions, and action items.";
+  }
 
-Your task:
-1. **TL;DR (2–4 sentences)**: A concise overview of the main discussion, capturing the key themes, tone, and outcomes.
-2. **Key Points (5–8 bullet points)**: Highlight the most important details such as:
-   - Who raised which ideas or concerns
-   - Any agreements, decisions, or action items
-   - Recurring themes or debates
-   - Notable media shared (e.g., “An image was shared by [Name]”)
-   - Significant quoted replies or forwarded messages
-3. **Links (if any)**: List all links shared in the conversation. For each link, provide a brief context and the link itself in the format: "[About the link, some small context] - https://example.com".
-
-Guidelines:
-- Be specific and context-aware. Avoid generic responses like “people discussed various things.”
-- If multiple people shared similar views, group them together.
-- If the conversation is casual (e.g., jokes, greetings), capture the overall vibe briefly.
-- If there are any links, create a "Links:" section and list them with context.
-- Always write the output in **English**.
-
-Messages to summarize:
-`;
+  let prompt = `You are a helpful assistant that summarizes WhatsApp group chats.\nYou will be given a list of messages, each containing:\n- sender name\n- text content\n- whether it is a quoted reply\n- whether it is forwarded\n- whether it contains media (image, video, audio)\n- timestamp\n\nYour task:\n1. **${tldrGuidance}**\n2. **${bulletsGuidance}**\n3. **Links (if any)**: List all links shared in the conversation. For each link, provide a brief context and the link itself in the format: "[About the link, some small context] - https://example.com".\n\nGuidelines:\n- Be specific and context-aware. Avoid generic responses like \u201cpeople discussed various things.\u201d\n- If multiple people shared similar views, group them together.\n- If the conversation is casual (e.g., jokes, greetings), capture the overall vibe briefly.\n- If there are any links, create a "Links:" section and list them with context.\n- Always write the output in **English**.\n\nMessages to summarize:\n`;
 
   // take last 300 messages, then reverse them
   messages
